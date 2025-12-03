@@ -5,7 +5,9 @@ Cursor / Claude から WordPress にブログ記事を投稿できる MCP (Model
 ## 機能
 
 - **投稿管理**: 作成・更新・取得・削除
-- **Markdown 対応**: GFM (GitHub Flavored Markdown) を自動で HTML に変換
+- **Markdown 対応**: GFM (GitHub Flavored Markdown) を自動で Gutenberg ブロックに変換
+- **Gutenberg ブロック出力**: 段落、見出し、リスト、画像、引用、テーブルなどが適切なブロック形式で出力
+- **Highlighting Code Block 対応**: コードブロックは [Highlighting Code Block](https://ja.wordpress.org/plugins/highlighting-code-block/) プラグイン形式で出力
 - **画像自動アップロード**: Markdown 内のローカル画像を検出して自動アップロード
 - **メディア管理**: 画像や動画のアップロード
 - **カテゴリ・タグ**: 一覧取得、投稿への設定
@@ -129,16 +131,33 @@ WordPressの下書き一覧を見せて
 
 ## Markdown の対応
 
-GFM (GitHub Flavored Markdown) に対応しています:
+GFM (GitHub Flavored Markdown) に対応し、WordPress Gutenberg ブロック形式で出力します:
 
-- 見出し (`#`, `##`, `###`)
-- リスト（順序付き、順序なし）
-- リンク
-- コードブロック（シンタックスハイライト）
-- テーブル
-- タスクリスト (`- [ ]`, `- [x]`)
-- 打ち消し線 (`~~text~~`)
-- 画像（ローカルファイルは自動アップロード）
+| Markdown 要素 | 出力ブロック |
+| --- | --- |
+| 段落 | `wp:paragraph` |
+| 見出し (`#`, `##`, `###`) | `wp:heading` |
+| リスト（順序付き、順序なし） | `wp:list` |
+| コードブロック | `wp:loos-hcb/code-block` (Highlighting Code Block) |
+| 引用 (`>`) | `wp:quote` |
+| 画像 | `wp:image` |
+| テーブル | `wp:table` |
+| 区切り線 (`---`) | `wp:separator` |
+| 打ち消し線 (`~~text~~`) | インライン `<del>` |
+| インラインコード | インライン `<code>` |
+
+### Highlighting Code Block
+
+コードブロックは [Highlighting Code Block](https://ja.wordpress.org/plugins/highlighting-code-block/) プラグイン形式で出力されます。WordPress にこのプラグインをインストールしておく必要があります。
+
+対応言語（一部）:
+- JavaScript / TypeScript (`js`, `ts`, `jsx`, `tsx`)
+- Python (`python`, `py`)
+- HTML / CSS / SCSS
+- Bash / Shell
+- PHP, Ruby, Go, Rust, Java, C/C++, SQL
+- YAML, JSON, Markdown
+- その他多数
 
 ### 画像の自動アップロード
 

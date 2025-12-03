@@ -14,7 +14,7 @@ import {
   processMarkdown,
   processMarkdownFile,
   replaceImagePaths,
-  convertToHtml,
+  convertToGutenbergBlocks,
 } from "./utils/markdown.js";
 import { postTools } from "./tools/posts.js";
 import { mediaTools, categoryTools, tagTools } from "./tools/media.js";
@@ -159,11 +159,11 @@ async function handleToolCall(
             }
           }
 
-          // 画像パスを置換してから HTML 変換
+          // 画像パスを置換してから Gutenberg ブロック変換
           content = replaceImagePaths(content, replacements);
-          htmlContent = convertToHtml(content);
+          htmlContent = convertToGutenbergBlocks(content);
         } else {
-          htmlContent = processed.html;
+          htmlContent = convertToGutenbergBlocks(content);
         }
       }
 
@@ -215,7 +215,7 @@ async function handleToolCall(
         markdown = replaceImagePaths(markdown, replacements);
       }
 
-      const htmlContent = convertToHtml(markdown);
+      const htmlContent = convertToGutenbergBlocks(markdown);
 
       const post = await wpAPI.createPost({
         title,
@@ -267,9 +267,9 @@ async function handleToolCall(
             }
 
             const updatedContent = replaceImagePaths(content, replacements);
-            htmlContent = convertToHtml(updatedContent);
+            htmlContent = convertToGutenbergBlocks(updatedContent);
           } else {
-            htmlContent = processed.html;
+            htmlContent = convertToGutenbergBlocks(content);
           }
         } else {
           htmlContent = content;

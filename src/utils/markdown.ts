@@ -2,6 +2,9 @@ import { marked } from "marked";
 import * as path from "path";
 import * as fs from "fs";
 
+// Gutenberg ブロック変換を再エクスポート
+export { convertToGutenbergBlocks } from "./gutenberg-renderer.js";
+
 // GFM (GitHub Flavored Markdown) を有効化
 marked.use({
   gfm: true,
