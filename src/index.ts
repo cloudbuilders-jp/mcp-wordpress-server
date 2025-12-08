@@ -174,6 +174,7 @@ async function handleToolCall(
         categories: args.categories as number[],
         tags: args.tags as number[],
         excerpt: args.excerpt as string,
+        featured_media: args.featured_media as number,
       });
 
       return {
@@ -223,6 +224,7 @@ async function handleToolCall(
         status: (args.status as "publish" | "draft" | "pending" | "private") || "draft",
         categories: args.categories as number[],
         tags: args.tags as number[],
+        featured_media: args.featured_media as number,
       });
 
       return {
@@ -282,6 +284,7 @@ async function handleToolCall(
         status: args.status as "publish" | "draft" | "pending" | "private",
         categories: args.categories as number[],
         tags: args.tags as number[],
+        featured_media: args.featured_media as number,
       });
 
       return {
@@ -347,6 +350,22 @@ async function handleToolCall(
       };
     }
 
+    case "delete_media": {
+      const result = await wpAPI.deleteMedia(
+        args.media_id as number,
+        args.force as boolean ?? true
+      );
+      return {
+        success: true,
+        message: "メディアを削除しました",
+        deleted_media: {
+          id: result.previous.id,
+          title: result.previous.title.rendered || result.previous.title.raw,
+          url: result.previous.source_url,
+        },
+      };
+    }
+
     // ========== カテゴリ ==========
     case "get_categories": {
       const categories = await wpAPI.getCategories({
@@ -362,6 +381,25 @@ async function handleToolCall(
       }));
     }
 
+    case "create_category": {
+      const category = await wpAPI.createCategory({
+        name: args.name as string,
+        slug: args.slug as string,
+        description: args.description as string,
+        parent: args.parent as number,
+      });
+      return {
+        success: true,
+        message: "カテゴリを作成しました",
+        category: {
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+          parent: category.parent,
+        },
+      };
+    }
+
     // ========== タグ ==========
     case "get_tags": {
       const tags = await wpAPI.getTags({
@@ -374,6 +412,23 @@ async function handleToolCall(
         slug: tag.slug,
         count: tag.count,
       }));
+    }
+
+    case "create_tag": {
+      const tag = await wpAPI.createTag({
+        name: args.name as string,
+        slug: args.slug as string,
+        description: args.description as string,
+      });
+      return {
+        success: true,
+        message: "タグを作成しました",
+        tag: {
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+        },
+      };
     }
 
     default:

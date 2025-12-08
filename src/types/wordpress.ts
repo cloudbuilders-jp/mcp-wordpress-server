@@ -102,6 +102,19 @@ export interface WPTag {
   slug: string;
 }
 
+export interface WPCategoryCreate {
+  name: string;
+  slug?: string;
+  description?: string;
+  parent?: number;
+}
+
+export interface WPTagCreate {
+  name: string;
+  slug?: string;
+  description?: string;
+}
+
 export interface WPError {
   code: string;
   message: string;

@@ -42,6 +42,25 @@ export const mediaTools: Tool[] = [
       required: ["media_id"],
     },
   },
+  {
+    name: "delete_media",
+    description:
+      "指定した ID のメディアを削除します。",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        media_id: {
+          type: "number",
+          description: "削除するメディアの ID",
+        },
+        force: {
+          type: "boolean",
+          description: "完全に削除するか（デフォルト: true）",
+        },
+      },
+      required: ["media_id"],
+    },
+  },
 ];
 
 export const categoryTools: Tool[] = [
@@ -63,6 +82,32 @@ export const categoryTools: Tool[] = [
       required: [],
     },
   },
+  {
+    name: "create_category",
+    description: "新しいカテゴリを作成します。",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: {
+          type: "string",
+          description: "カテゴリ名（必須）",
+        },
+        slug: {
+          type: "string",
+          description: "スラッグ（URLに使用される識別子）",
+        },
+        description: {
+          type: "string",
+          description: "カテゴリの説明",
+        },
+        parent: {
+          type: "number",
+          description: "親カテゴリの ID（階層構造にする場合）",
+        },
+      },
+      required: ["name"],
+    },
+  },
 ];
 
 export const tagTools: Tool[] = [
@@ -82,6 +127,28 @@ export const tagTools: Tool[] = [
         },
       },
       required: [],
+    },
+  },
+  {
+    name: "create_tag",
+    description: "新しいタグを作成します。",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: {
+          type: "string",
+          description: "タグ名（必須）",
+        },
+        slug: {
+          type: "string",
+          description: "スラッグ（URLに使用される識別子）",
+        },
+        description: {
+          type: "string",
+          description: "タグの説明",
+        },
+      },
+      required: ["name"],
     },
   },
 ];

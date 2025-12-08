@@ -9,6 +9,8 @@ import type {
   WPMedia,
   WPCategory,
   WPTag,
+  WPCategoryCreate,
+  WPTagCreate,
   WPError,
 } from "../types/wordpress.js";
 
@@ -242,6 +244,20 @@ export class WordPressAPI {
     }
   }
 
+  async deleteMedia(
+    mediaId: number,
+    force: boolean = true
+  ): Promise<{ deleted: boolean; previous: WPMedia }> {
+    try {
+      const response = await this.client.delete(`/media/${mediaId}`, {
+        params: { force },
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   private getMimeType(filename: string): string {
     const ext = path.extname(filename).toLowerCase();
     const mimeTypes: Record<string, string> = {
@@ -279,6 +295,20 @@ export class WordPressAPI {
     }
   }
 
+  async createCategory(data: WPCategoryCreate): Promise<WPCategory> {
+    try {
+      const response = await this.client.post<WPCategory>("/categories", {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        parent: data.parent,
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   // ========== タグ (Tags) ==========
 
   async getTags(options?: {
@@ -293,6 +323,19 @@ export class WordPressAPI {
           per_page: options?.perPage || 100,
           search: options?.search,
         },
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async createTag(data: WPTagCreate): Promise<WPTag> {
+    try {
+      const response = await this.client.post<WPTag>("/tags", {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
       });
       return response.data;
     } catch (error) {
