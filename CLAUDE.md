@@ -63,3 +63,11 @@ Required:
 
 Optional:
 - `WP_POST_TYPE` - Custom post type slug (default: "posts")
+
+## Branch Strategy
+
+This project uses **GitHub Flow**:
+1. `main` branch is always deployable
+2. Create feature branches from `main` (e.g., `feature/add-new-tool`, `fix/image-upload-bug`)
+3. Open a Pull Request to `main` when ready for review
+4. After review and approval, merge to `main`
