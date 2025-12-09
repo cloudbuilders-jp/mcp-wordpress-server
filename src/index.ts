@@ -17,7 +17,7 @@ import {
   convertToGutenbergBlocks,
 } from "./utils/markdown.js";
 import { postTools } from "./tools/posts.js";
-import { mediaTools, categoryTools, tagTools } from "./tools/media.js";
+import { mediaTools, categoryTools, tagTools, taxonomyTools } from "./tools/media.js";
 
 // 環境変数チェック
 const WORDPRESS_URL = process.env.WORDPRESS_URL;
@@ -54,7 +54,7 @@ const server = new Server(
 );
 
 // すべての Tools を結合
-const allTools = [...postTools, ...mediaTools, ...categoryTools, ...tagTools];
+const allTools = [...postTools, ...mediaTools, ...categoryTools, ...tagTools, ...taxonomyTools];
 
 // Tool リスト
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -174,6 +174,7 @@ async function handleToolCall(
         categories: args.categories as number[],
         tags: args.tags as number[],
         excerpt: args.excerpt as string,
+        featured_media: args.featured_media as number,
       });
 
       return {
@@ -223,6 +224,7 @@ async function handleToolCall(
         status: (args.status as "publish" | "draft" | "pending" | "private") || "draft",
         categories: args.categories as number[],
         tags: args.tags as number[],
+        featured_media: args.featured_media as number,
       });
 
       return {
@@ -282,6 +284,7 @@ async function handleToolCall(
         status: args.status as "publish" | "draft" | "pending" | "private",
         categories: args.categories as number[],
         tags: args.tags as number[],
+        featured_media: args.featured_media as number,
       });
 
       return {
@@ -347,6 +350,22 @@ async function handleToolCall(
       };
     }
 
+    case "delete_media": {
+      const result = await wpAPI.deleteMedia(
+        args.media_id as number,
+        args.force as boolean ?? true
+      );
+      return {
+        success: true,
+        message: "メディアを削除しました",
+        deleted_media: {
+          id: result.previous.id,
+          title: result.previous.title.rendered || result.previous.title.raw,
+          url: result.previous.source_url,
+        },
+      };
+    }
+
     // ========== カテゴリ ==========
     case "get_categories": {
       const categories = await wpAPI.getCategories({
@@ -362,6 +381,25 @@ async function handleToolCall(
       }));
     }
 
+    case "create_category": {
+      const category = await wpAPI.createCategory({
+        name: args.name as string,
+        slug: args.slug as string,
+        description: args.description as string,
+        parent: args.parent as number,
+      });
+      return {
+        success: true,
+        message: "カテゴリを作成しました",
+        category: {
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+          parent: category.parent,
+        },
+      };
+    }
+
     // ========== タグ ==========
     case "get_tags": {
       const tags = await wpAPI.getTags({
@@ -374,6 +412,89 @@ async function handleToolCall(
         slug: tag.slug,
         count: tag.count,
       }));
+    }
+
+    case "create_tag": {
+      const tag = await wpAPI.createTag({
+        name: args.name as string,
+        slug: args.slug as string,
+        description: args.description as string,
+      });
+      return {
+        success: true,
+        message: "タグを作成しました",
+        tag: {
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+        },
+      };
+    }
+
+    // ========== カスタムタクソノミー ==========
+    case "get_taxonomies": {
+      const taxonomies = await wpAPI.getTaxonomies();
+      return Object.entries(taxonomies).map(([slug, taxonomy]) => ({
+        slug,
+        name: taxonomy.name,
+        description: taxonomy.description,
+        types: taxonomy.types,
+        hierarchical: taxonomy.hierarchical,
+        rest_base: taxonomy.rest_base,
+      }));
+    }
+
+    case "get_taxonomy_terms": {
+      const terms = await wpAPI.getTaxonomyTerms(args.taxonomy as string, {
+        search: args.search as string,
+        perPage: args.per_page as number,
+        parent: args.parent as number,
+        hide_empty: args.hide_empty as boolean,
+      });
+      return terms.map((term) => ({
+        id: term.id,
+        name: term.name,
+        slug: term.slug,
+        description: term.description,
+        parent: term.parent,
+        count: term.count,
+      }));
+    }
+
+    case "create_taxonomy_term": {
+      const term = await wpAPI.createTaxonomyTerm(args.taxonomy as string, {
+        name: args.name as string,
+        slug: args.slug as string,
+        description: args.description as string,
+        parent: args.parent as number,
+      });
+      return {
+        success: true,
+        message: "タームを作成しました",
+        term: {
+          id: term.id,
+          name: term.name,
+          slug: term.slug,
+          parent: term.parent,
+        },
+      };
+    }
+
+    case "set_post_terms": {
+      const post = await wpAPI.updatePostTaxonomyTerms(
+        args.post_id as number,
+        args.taxonomy as string,
+        args.term_ids as number[]
+      );
+      return {
+        success: true,
+        message: "投稿にタームを設定しました",
+        post: {
+          id: post.id,
+          title: post.title.rendered || post.title.raw,
+          admin_url: wpAPI.getAdminPostUrl(post.id),
+        },
+      };
     }
 
     default:

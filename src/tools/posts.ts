@@ -91,6 +91,10 @@ export const postTools: Tool[] = [
           description:
             "Markdown 内の相対画像パスを解決するための基準ディレクトリ",
         },
+        featured_media: {
+          type: "number",
+          description: "アイキャッチ画像のメディア ID",
+        },
       },
       required: ["title", "content"],
     },
@@ -120,6 +124,10 @@ export const postTools: Tool[] = [
           type: "array",
           items: { type: "number" },
           description: "タグ ID の配列",
+        },
+        featured_media: {
+          type: "number",
+          description: "アイキャッチ画像のメディア ID",
         },
       },
       required: ["file_path"],
@@ -166,6 +174,10 @@ export const postTools: Tool[] = [
           type: "string",
           description:
             "Markdown 内の相対画像パスを解決するための基準ディレクトリ",
+        },
+        featured_media: {
+          type: "number",
+          description: "アイキャッチ画像のメディア ID",
         },
       },
       required: ["post_id"],

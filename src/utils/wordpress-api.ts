@@ -9,7 +9,12 @@ import type {
   WPMedia,
   WPCategory,
   WPTag,
+  WPCategoryCreate,
+  WPTagCreate,
   WPError,
+  WPTaxonomy,
+  WPTerm,
+  WPTermCreate,
 } from "../types/wordpress.js";
 
 export class WordPressAPIError extends Error {
@@ -242,6 +247,20 @@ export class WordPressAPI {
     }
   }
 
+  async deleteMedia(
+    mediaId: number,
+    force: boolean = true
+  ): Promise<{ deleted: boolean; previous: WPMedia }> {
+    try {
+      const response = await this.client.delete(`/media/${mediaId}`, {
+        params: { force },
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   private getMimeType(filename: string): string {
     const ext = path.extname(filename).toLowerCase();
     const mimeTypes: Record<string, string> = {
@@ -279,6 +298,20 @@ export class WordPressAPI {
     }
   }
 
+  async createCategory(data: WPCategoryCreate): Promise<WPCategory> {
+    try {
+      const response = await this.client.post<WPCategory>("/categories", {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        parent: data.parent,
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   // ========== タグ (Tags) ==========
 
   async getTags(options?: {
@@ -294,6 +327,91 @@ export class WordPressAPI {
           search: options?.search,
         },
       });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async createTag(data: WPTagCreate): Promise<WPTag> {
+    try {
+      const response = await this.client.post<WPTag>("/tags", {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  // ========== カスタムタクソノミー (Custom Taxonomies) ==========
+
+  async getTaxonomies(): Promise<Record<string, WPTaxonomy>> {
+    try {
+      const response = await this.client.get<Record<string, WPTaxonomy>>("/taxonomies");
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getTaxonomyTerms(
+    taxonomy: string,
+    options?: {
+      page?: number;
+      perPage?: number;
+      search?: string;
+      parent?: number;
+      hide_empty?: boolean;
+    }
+  ): Promise<WPTerm[]> {
+    try {
+      const response = await this.client.get<WPTerm[]>(`/${taxonomy}`, {
+        params: {
+          page: options?.page || 1,
+          per_page: options?.perPage || 100,
+          search: options?.search,
+          parent: options?.parent,
+          hide_empty: options?.hide_empty ?? false,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async createTaxonomyTerm(
+    taxonomy: string,
+    data: WPTermCreate
+  ): Promise<WPTerm> {
+    try {
+      const response = await this.client.post<WPTerm>(`/${taxonomy}`, {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        parent: data.parent,
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async updatePostTaxonomyTerms(
+    postId: number,
+    taxonomy: string,
+    termIds: number[]
+  ): Promise<WPPost> {
+    try {
+      const response = await this.client.post<WPPost>(
+        `${this.getPostEndpoint()}/${postId}`,
+        {
+          [taxonomy]: termIds,
+        }
+      );
       return response.data;
     } catch (error) {
       this.handleError(error);
