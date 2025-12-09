@@ -20,10 +20,11 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^1.32.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "axios": "^1.7.0",
-    "marked": "^15.0.0",
-    "form-data": "^4.0.0"
+    "form-data": "^4.0.0",
+    "marked": "^15.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

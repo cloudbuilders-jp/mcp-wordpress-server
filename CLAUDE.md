@@ -27,16 +27,18 @@ WORDPRESS_URL=https://... WORDPRESS_USERNAME=... WORDPRESS_APP_PASSWORD=... WP_P
 
 ### Tool Definitions
 - `src/tools/posts.ts` - Post-related MCP tool schemas (get_posts, create_post, etc.)
-- `src/tools/media.ts` - Media, category, and tag tool schemas
+- `src/tools/media.ts` - Media, category, tag, and image generation tool schemas
 
 ### Core Utilities
 - `src/utils/wordpress-api.ts` - WordPress REST API client using axios with Basic Auth
 - `src/utils/markdown.ts` - Markdown processing: title extraction, local image detection, path replacement
 - `src/utils/gutenberg-renderer.ts` - Custom marked.js renderer converting Markdown to Gutenberg blocks
 - `src/utils/language-map.ts` - Language identifier mapping for Highlighting Code Block plugin
+- `src/utils/gemini-image.ts` - Gemini API client for AI image generation (featured images)
 
 ### Types
 - `src/types/wordpress.ts` - TypeScript interfaces for WordPress REST API (WPPost, WPMedia, etc.)
+- `src/types/gemini.ts` - TypeScript interfaces for Gemini API image generation
 
 ## Key Implementation Details
 
@@ -63,6 +65,7 @@ Required:
 
 Optional:
 - `WP_POST_TYPE` - Custom post type slug (default: "posts")
+- `GEMINI_API_KEY` or `GOOGLE_API_KEY` - Gemini API key (required for `generate_featured_image` tool)
 
 ## Branch Strategy
 
