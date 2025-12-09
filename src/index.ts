@@ -17,7 +17,7 @@ import {
   convertToGutenbergBlocks,
 } from "./utils/markdown.js";
 import { postTools } from "./tools/posts.js";
-import { mediaTools, categoryTools, tagTools } from "./tools/media.js";
+import { mediaTools, categoryTools, tagTools, taxonomyTools } from "./tools/media.js";
 
 // 環境変数チェック
 const WORDPRESS_URL = process.env.WORDPRESS_URL;
@@ -54,7 +54,7 @@ const server = new Server(
 );
 
 // すべての Tools を結合
-const allTools = [...postTools, ...mediaTools, ...categoryTools, ...tagTools];
+const allTools = [...postTools, ...mediaTools, ...categoryTools, ...tagTools, ...taxonomyTools];
 
 // Tool リスト
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -427,6 +427,72 @@ async function handleToolCall(
           id: tag.id,
           name: tag.name,
           slug: tag.slug,
+        },
+      };
+    }
+
+    // ========== カスタムタクソノミー ==========
+    case "get_taxonomies": {
+      const taxonomies = await wpAPI.getTaxonomies();
+      return Object.entries(taxonomies).map(([slug, taxonomy]) => ({
+        slug,
+        name: taxonomy.name,
+        description: taxonomy.description,
+        types: taxonomy.types,
+        hierarchical: taxonomy.hierarchical,
+        rest_base: taxonomy.rest_base,
+      }));
+    }
+
+    case "get_taxonomy_terms": {
+      const terms = await wpAPI.getTaxonomyTerms(args.taxonomy as string, {
+        search: args.search as string,
+        perPage: args.per_page as number,
+        parent: args.parent as number,
+        hide_empty: args.hide_empty as boolean,
+      });
+      return terms.map((term) => ({
+        id: term.id,
+        name: term.name,
+        slug: term.slug,
+        description: term.description,
+        parent: term.parent,
+        count: term.count,
+      }));
+    }
+
+    case "create_taxonomy_term": {
+      const term = await wpAPI.createTaxonomyTerm(args.taxonomy as string, {
+        name: args.name as string,
+        slug: args.slug as string,
+        description: args.description as string,
+        parent: args.parent as number,
+      });
+      return {
+        success: true,
+        message: "タームを作成しました",
+        term: {
+          id: term.id,
+          name: term.name,
+          slug: term.slug,
+          parent: term.parent,
+        },
+      };
+    }
+
+    case "set_post_terms": {
+      const post = await wpAPI.updatePostTaxonomyTerms(
+        args.post_id as number,
+        args.taxonomy as string,
+        args.term_ids as number[]
+      );
+      return {
+        success: true,
+        message: "投稿にタームを設定しました",
+        post: {
+          id: post.id,
+          title: post.title.rendered || post.title.raw,
+          admin_url: wpAPI.getAdminPostUrl(post.id),
         },
       };
     }

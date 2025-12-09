@@ -12,6 +12,9 @@ import type {
   WPCategoryCreate,
   WPTagCreate,
   WPError,
+  WPTaxonomy,
+  WPTerm,
+  WPTermCreate,
 } from "../types/wordpress.js";
 
 export class WordPressAPIError extends Error {
@@ -337,6 +340,78 @@ export class WordPressAPI {
         slug: data.slug,
         description: data.description,
       });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  // ========== カスタムタクソノミー (Custom Taxonomies) ==========
+
+  async getTaxonomies(): Promise<Record<string, WPTaxonomy>> {
+    try {
+      const response = await this.client.get<Record<string, WPTaxonomy>>("/taxonomies");
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getTaxonomyTerms(
+    taxonomy: string,
+    options?: {
+      page?: number;
+      perPage?: number;
+      search?: string;
+      parent?: number;
+      hide_empty?: boolean;
+    }
+  ): Promise<WPTerm[]> {
+    try {
+      const response = await this.client.get<WPTerm[]>(`/${taxonomy}`, {
+        params: {
+          page: options?.page || 1,
+          per_page: options?.perPage || 100,
+          search: options?.search,
+          parent: options?.parent,
+          hide_empty: options?.hide_empty ?? false,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async createTaxonomyTerm(
+    taxonomy: string,
+    data: WPTermCreate
+  ): Promise<WPTerm> {
+    try {
+      const response = await this.client.post<WPTerm>(`/${taxonomy}`, {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        parent: data.parent,
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async updatePostTaxonomyTerms(
+    postId: number,
+    taxonomy: string,
+    termIds: number[]
+  ): Promise<WPPost> {
+    try {
+      const response = await this.client.post<WPPost>(
+        `${this.getPostEndpoint()}/${postId}`,
+        {
+          [taxonomy]: termIds,
+        }
+      );
       return response.data;
     } catch (error) {
       this.handleError(error);

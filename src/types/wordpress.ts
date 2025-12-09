@@ -122,3 +122,32 @@ export interface WPError {
     status: number;
   };
 }
+
+// カスタムタクソノミー関連
+export interface WPTaxonomy {
+  name: string;
+  slug: string;
+  description: string;
+  types: string[];
+  hierarchical: boolean;
+  rest_base: string;
+  rest_namespace: string;
+}
+
+export interface WPTerm {
+  id: number;
+  count: number;
+  description: string;
+  link: string;
+  name: string;
+  slug: string;
+  taxonomy: string;
+  parent: number;
+}
+
+export interface WPTermCreate {
+  name: string;
+  slug?: string;
+  description?: string;
+  parent?: number;
+}
