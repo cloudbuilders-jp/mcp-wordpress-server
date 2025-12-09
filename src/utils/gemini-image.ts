@@ -123,9 +123,9 @@ export async function generateImage(
     }
 
     for (const part of parts) {
-      if (part.inlineData) {
+      if (part.inlineData && part.inlineData.data) {
         return {
-          base64Data: part.inlineData.data as string,
+          base64Data: part.inlineData.data,
           mimeType: part.inlineData.mimeType || "image/png",
           prompt,
         };
