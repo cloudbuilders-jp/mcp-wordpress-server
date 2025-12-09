@@ -98,11 +98,6 @@ export const mediaTools: Tool[] = [
           ],
           description: "画像のアスペクト比（デフォルト: 16:9）",
         },
-        image_size: {
-          type: "string",
-          enum: ["1K", "2K", "4K"],
-          description: "画像の解像度（デフォルト: 2K）※現在APIでは未サポート",
-        },
         style: {
           type: "string",
           enum: ["photorealistic", "illustration", "abstract", "minimalist"],

@@ -23,7 +23,7 @@ import {
   isGeminiConfigured,
   GeminiAPIError,
 } from "./utils/gemini-image.js";
-import type { AspectRatio, ImageSize, ImageStyle } from "./types/gemini.js";
+import type { AspectRatio, ImageStyle } from "./types/gemini.js";
 import { postTools } from "./tools/posts.js";
 import { mediaTools, categoryTools, tagTools, taxonomyTools } from "./tools/media.js";
 
@@ -391,17 +391,19 @@ async function handleToolCall(
         content: args.content as string,
         customPrompt: args.custom_prompt as string | undefined,
         aspectRatio: (args.aspect_ratio as AspectRatio) || "16:9",
-        imageSize: (args.image_size as ImageSize) || "2K",
         style: (args.style as ImageStyle) || "illustration",
       });
 
-      // 一時ファイルに保存
-      const tempFilePath = await saveImageToTempFile(
-        generated.base64Data,
-        generated.mimeType
-      );
-
+      // 一時ファイルのパスを try-finally スコープの外で宣言
+      // これにより、saveImageToTempFile 後のあらゆるエラーでもクリーンアップが保証される
+      let tempFilePath: string | undefined;
       try {
+        // 一時ファイルに保存
+        tempFilePath = await saveImageToTempFile(
+          generated.base64Data,
+          generated.mimeType
+        );
+
         // WordPress にアップロード
         const media = await wpAPI.uploadMedia(tempFilePath, {
           title: args.title as string,
@@ -421,14 +423,15 @@ async function handleToolCall(
           generation_info: {
             prompt_used: generated.prompt,
             aspect_ratio: args.aspect_ratio || "16:9",
-            image_size: args.image_size || "2K",
             style: args.style || "illustration",
           },
           usage_hint: `このメディア ID (${media.id}) を create_post の featured_media パラメータに指定してください`,
         };
       } finally {
-        // 一時ファイルをクリーンアップ
-        cleanupTempFile(tempFilePath);
+        // 一時ファイルが作成されていた場合はクリーンアップ
+        if (tempFilePath) {
+          cleanupTempFile(tempFilePath);
+        }
       }
     }
 

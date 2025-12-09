@@ -90,15 +90,14 @@ export async function generateImage(
 
   const config: {
     responseModalities: ("TEXT" | "IMAGE")[];
-    aspectRatio?: string;
-    // Note: imageSize is not yet supported in the current API version
+    imageConfig?: { aspectRatio?: string };
   } = {
     responseModalities: ["IMAGE"],
   };
 
-  // アスペクト比の設定
+  // アスペクト比の設定（imageConfig 内にネストする必要がある）
   if (options.aspectRatio) {
-    config.aspectRatio = options.aspectRatio;
+    config.imageConfig = { aspectRatio: options.aspectRatio };
   }
 
   try {

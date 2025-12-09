@@ -12,8 +12,6 @@ export type AspectRatio =
   | "16:9"
   | "21:9";
 
-export type ImageSize = "1K" | "2K" | "4K";
-
 export type ImageStyle =
   | "photorealistic"
   | "illustration"
@@ -22,7 +20,6 @@ export type ImageStyle =
 
 export interface GeminiImageConfig {
   aspectRatio?: AspectRatio;
-  imageSize?: ImageSize;
 }
 
 export interface GenerateImageOptions {
@@ -30,7 +27,6 @@ export interface GenerateImageOptions {
   content: string;
   customPrompt?: string;
   aspectRatio?: AspectRatio;
-  imageSize?: ImageSize;
   style?: ImageStyle;
 }
 
