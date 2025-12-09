@@ -9,8 +9,9 @@ Cursor / Claude から WordPress にブログ記事を投稿できる MCP (Model
 - **Gutenberg ブロック出力**: 段落、見出し、リスト、画像、引用、テーブルなどが適切なブロック形式で出力
 - **Highlighting Code Block 対応**: コードブロックは [Highlighting Code Block](https://ja.wordpress.org/plugins/highlighting-code-block/) プラグイン形式で出力
 - **画像自動アップロード**: Markdown 内のローカル画像を検出して自動アップロード
-- **メディア管理**: 画像や動画のアップロード
-- **カテゴリ・タグ**: 一覧取得、投稿への設定
+- **アイキャッチ画像**: 投稿作成・更新時にアイキャッチ画像を設定可能
+- **メディア管理**: 画像や動画のアップロード・削除
+- **カテゴリ・タグ**: 一覧取得、新規作成、投稿への設定
 
 ## セットアップ
 
@@ -116,6 +117,8 @@ WordPressの下書き一覧を見せて
 
 ## 利用可能な Tools
 
+### 投稿管理
+
 | Tool                    | 説明                            |
 | ----------------------- | ------------------------------- |
 | `get_posts`             | 投稿一覧を取得                  |
@@ -124,10 +127,32 @@ WordPressの下書き一覧を見せて
 | `create_post_from_file` | Markdown ファイルから投稿を作成 |
 | `update_post`           | 投稿を更新                      |
 | `delete_post`           | 投稿を削除                      |
-| `upload_media`          | メディアをアップロード          |
-| `get_media`             | メディア情報を取得              |
-| `get_categories`        | カテゴリ一覧を取得              |
-| `get_tags`              | タグ一覧を取得                  |
+
+### メディア管理
+
+| Tool           | 説明                   |
+| -------------- | ---------------------- |
+| `upload_media` | メディアをアップロード |
+| `get_media`    | メディア情報を取得     |
+| `delete_media` | メディアを削除         |
+
+### カテゴリ・タグ管理
+
+| Tool              | 説明               |
+| ----------------- | ------------------ |
+| `get_categories`  | カテゴリ一覧を取得 |
+| `create_category` | カテゴリを新規作成 |
+| `get_tags`        | タグ一覧を取得     |
+| `create_tag`      | タグを新規作成     |
+
+### アイキャッチ画像の設定
+
+`create_post`、`create_post_from_file`、`update_post` で `featured_media` パラメータを使用してアイキャッチ画像を設定できます：
+
+```
+1. まず画像をアップロード: upload_media で画像をアップロードし、メディアIDを取得
+2. 投稿作成時に指定: create_post の featured_media にメディアIDを設定
+```
 
 ## Markdown の対応
 
