@@ -147,12 +147,23 @@ export async function generateImage(
   }
 }
 
+// MIME タイプから拡張子を取得
+function getExtensionFromMimeType(mimeType: string): string {
+  const mimeToExt: Record<string, string> = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+  };
+  return mimeToExt[mimeType] || ".png";
+}
+
 // Base64データを一時ファイルに保存
 export async function saveImageToTempFile(
   base64Data: string,
   mimeType: string
 ): Promise<string> {
-  const ext = mimeType === "image/jpeg" ? ".jpg" : ".png";
+  const ext = getExtensionFromMimeType(mimeType);
   const filename = `featured-image-${Date.now()}${ext}`;
   const tempPath = path.join(os.tmpdir(), filename);
 
