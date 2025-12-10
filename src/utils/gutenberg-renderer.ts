@@ -19,6 +19,21 @@ function escapeHtml(text: string): string {
 }
 
 /**
+ * 画像ブロックを生成するヘルパー関数
+ * ブロックレベルの画像（単独行の画像）用
+ */
+function renderImageBlock(token: Tokens.Image): string {
+  const altAttr = token.text ? ` alt="${escapeHtml(token.text)}"` : "";
+  const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : "";
+
+  return (
+    `<!-- wp:image -->\n` +
+    `<figure class="wp-block-image"><img src="${token.href}"${altAttr}${titleAttr}/></figure>\n` +
+    `<!-- /wp:image -->\n\n`
+  );
+}
+
+/**
  * Gutenberg ブロック用カスタムレンダラー
  */
 const gutenbergRenderer: Partial<Renderer> = {
@@ -50,6 +65,12 @@ const gutenbergRenderer: Partial<Renderer> = {
 
   // 段落
   paragraph(this: Renderer, token: Tokens.Paragraph): string {
+    // 段落が画像のみを含む場合、画像ブロックを直接出力
+    // marked.js は単独行の画像も段落としてパースするため、この処理が必要
+    if (token.tokens.length === 1 && token.tokens[0].type === "image") {
+      return renderImageBlock(token.tokens[0] as Tokens.Image);
+    }
+
     const content = this.parser.parseInline(token.tokens);
     // 空の段落はスキップ
     if (!content.trim()) return "";
@@ -125,16 +146,13 @@ const gutenbergRenderer: Partial<Renderer> = {
     );
   },
 
-  // 画像
+  // 画像（インライン用）
+  // 注: ブロックレベルの画像は paragraph() 内で renderImageBlock() を使用して処理される
+  // この関数はテキスト中に埋め込まれた画像（インライン画像）用
   image(this: Renderer, token: Tokens.Image): string {
     const altAttr = token.text ? ` alt="${escapeHtml(token.text)}"` : "";
     const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : "";
-
-    return (
-      `<!-- wp:image -->\n` +
-      `<figure class="wp-block-image"><img src="${token.href}"${altAttr}${titleAttr}/></figure>\n` +
-      `<!-- /wp:image -->\n\n`
-    );
+    return `<img src="${token.href}"${altAttr}${titleAttr}/>`;
   },
 
   // 区切り線
