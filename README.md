@@ -10,6 +10,7 @@ Cursor / Claude から WordPress にブログ記事を投稿できる MCP (Model
 - **Highlighting Code Block 対応**: コードブロックは [Highlighting Code Block](https://ja.wordpress.org/plugins/highlighting-code-block/) プラグイン形式で出力
 - **画像自動アップロード**: Markdown 内のローカル画像を検出して自動アップロード
 - **アイキャッチ画像**: 投稿作成・更新時にアイキャッチ画像を設定可能
+- **AI アイキャッチ画像生成**: Gemini API を使って記事内容からアイキャッチ画像を自動生成
 - **メディア管理**: 画像や動画のアップロード・削除
 - **カテゴリ・タグ**: 一覧取得、新規作成、投稿への設定
 - **カスタムタクソノミー対応**: カスタム投稿タイプのタクソノミー（カテゴリ・タグ）の取得・作成・設定
@@ -69,6 +70,7 @@ npm run build
 | `WORDPRESS_USERNAME`     | ✅   | WordPress ユーザー名              |
 | `WORDPRESS_APP_PASSWORD` | ✅   | アプリケーションパスワード        |
 | `WP_POST_TYPE`           | ❌   | 投稿タイプ（デフォルト: `posts`） |
+| `GEMINI_API_KEY`         | ❌   | Gemini API キー（`generate_featured_image` 使用時に必要） |
 
 > **カスタム投稿タイプの使用**: `WP_POST_TYPE` を設定すると、通常の「投稿」ではなくカスタム投稿タイプに対して操作を行います。例えば `articles` を設定すると、`/wp-json/wp/v2/articles` エンドポイントを使用します。
 
@@ -131,11 +133,12 @@ WordPressの下書き一覧を見せて
 
 ### メディア管理
 
-| Tool           | 説明                   |
-| -------------- | ---------------------- |
-| `upload_media` | メディアをアップロード |
-| `get_media`    | メディア情報を取得     |
-| `delete_media` | メディアを削除         |
+| Tool                      | 説明                                         |
+| ------------------------- | -------------------------------------------- |
+| `upload_media`            | メディアをアップロード                       |
+| `get_media`               | メディア情報を取得                           |
+| `delete_media`            | メディアを削除                               |
+| `generate_featured_image` | AI でアイキャッチ画像を生成してアップロード  |
 
 ### カテゴリ・タグ管理
 
@@ -177,6 +180,34 @@ set_post_terms で投稿ID、タクソノミー、ターム ID の配列を指�
 ```
 1. まず画像をアップロード: upload_media で画像をアップロードし、メディアIDを取得
 2. 投稿作成時に指定: create_post の featured_media にメディアIDを設定
+```
+
+### AI アイキャッチ画像生成
+
+`generate_featured_image` ツールを使用すると、記事のタイトルと本文から AI（Gemini API）でアイキャッチ画像を自動生成できます。
+
+**必要な設定**: 環境変数 `GEMINI_API_KEY` を設定してください。
+
+**パラメータ**:
+
+| パラメータ     | 必須 | 説明                                                      |
+| -------------- | ---- | --------------------------------------------------------- |
+| `title`        | ✅   | 記事のタイトル                                            |
+| `content`      | ✅   | 記事の本文（Markdown 可）                                 |
+| `custom_prompt`| ❌   | カスタム画像生成プロンプト（指定時は本文からの自動生成をスキップ） |
+| `aspect_ratio` | ❌   | アスペクト比（デフォルト: `16:9`）                        |
+| `style`        | ❌   | スタイル: `photorealistic`, `illustration`, `abstract`, `minimalist`（デフォルト: `illustration`） |
+| `alt_text`     | ❌   | 代替テキスト                                              |
+
+**使用例**:
+
+```
+# 記事内容からアイキャッチ画像を自動生成
+generate_featured_image でタイトルと本文を指定
+→ メディア ID が返却される
+
+# 投稿作成時に設定
+create_post で featured_media に返却されたメディア ID を指定
 ```
 
 ## Markdown の対応

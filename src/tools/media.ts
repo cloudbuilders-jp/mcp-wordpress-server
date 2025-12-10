@@ -61,6 +61,56 @@ export const mediaTools: Tool[] = [
       required: ["media_id"],
     },
   },
+  {
+    name: "generate_featured_image",
+    description:
+      "記事のタイトルと本文からアイキャッチ画像を自動生成し、WordPress にアップロードします。Gemini API (Nano Banana Pro / gemini-3-pro-image-preview) を使用します。GEMINI_API_KEY または GOOGLE_API_KEY 環境変数が必要です。",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        title: {
+          type: "string",
+          description: "記事のタイトル（画像生成のヒントとして使用）",
+        },
+        content: {
+          type: "string",
+          description:
+            "記事の本文（Markdown 形式可）。内容を要約して画像生成プロンプトを作成します",
+        },
+        custom_prompt: {
+          type: "string",
+          description:
+            "カスタム画像生成プロンプト（指定した場合、タイトル・本文からの自動生成をスキップ）",
+        },
+        aspect_ratio: {
+          type: "string",
+          enum: [
+            "1:1",
+            "2:3",
+            "3:2",
+            "3:4",
+            "4:3",
+            "4:5",
+            "5:4",
+            "9:16",
+            "16:9",
+            "21:9",
+          ],
+          description: "画像のアスペクト比（デフォルト: 16:9）",
+        },
+        style: {
+          type: "string",
+          enum: ["photorealistic", "illustration", "abstract", "minimalist"],
+          description: "画像のスタイル（デフォルト: illustration）",
+        },
+        alt_text: {
+          type: "string",
+          description: "アップロード時の代替テキスト（未指定時はタイトルを使用）",
+        },
+      },
+      required: ["title", "content"],
+    },
+  },
 ];
 
 export const categoryTools: Tool[] = [

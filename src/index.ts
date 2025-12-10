@@ -16,6 +16,14 @@ import {
   replaceImagePaths,
   convertToGutenbergBlocks,
 } from "./utils/markdown.js";
+import {
+  generateImage,
+  saveImageToTempFile,
+  cleanupTempFile,
+  isGeminiConfigured,
+  GeminiAPIError,
+} from "./utils/gemini-image.js";
+import type { AspectRatio, ImageStyle } from "./types/gemini.js";
 import { postTools } from "./tools/posts.js";
 import { mediaTools, categoryTools, tagTools, taxonomyTools } from "./tools/media.js";
 
@@ -79,9 +87,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const errorMessage =
       error instanceof WordPressAPIError
         ? `WordPress API Error: ${error.message}`
-        : error instanceof Error
-          ? error.message
-          : "Unknown error occurred";
+        : error instanceof GeminiAPIError
+          ? `Gemini API Error: ${error.message} (${error.code || "UNKNOWN"})`
+          : error instanceof Error
+            ? error.message
+            : "Unknown error occurred";
 
     return {
       content: [
@@ -364,6 +374,65 @@ async function handleToolCall(
           url: result.previous.source_url,
         },
       };
+    }
+
+    case "generate_featured_image": {
+      // API キーチェック
+      if (!isGeminiConfigured()) {
+        throw new GeminiAPIError(
+          "Gemini API is not configured. Please set GEMINI_API_KEY or GOOGLE_API_KEY environment variable.",
+          "API_KEY_MISSING"
+        );
+      }
+
+      // 画像生成
+      const generated = await generateImage({
+        title: args.title as string,
+        content: args.content as string,
+        customPrompt: args.custom_prompt as string | undefined,
+        aspectRatio: (args.aspect_ratio as AspectRatio) || "16:9",
+        style: (args.style as ImageStyle) || "illustration",
+      });
+
+      // 一時ファイルのパスを try-finally スコープの外で宣言
+      // これにより、saveImageToTempFile 後のあらゆるエラーでもクリーンアップが保証される
+      let tempFilePath: string | undefined;
+      try {
+        // 一時ファイルに保存
+        tempFilePath = await saveImageToTempFile(
+          generated.base64Data,
+          generated.mimeType
+        );
+
+        // WordPress にアップロード
+        const media = await wpAPI.uploadMedia(tempFilePath, {
+          title: args.title as string,
+          altText: (args.alt_text as string) || (args.title as string),
+        });
+
+        return {
+          success: true,
+          message: "アイキャッチ画像を生成してアップロードしました",
+          media: {
+            id: media.id,
+            title: media.title.rendered || media.title.raw,
+            url: media.source_url,
+            width: media.media_details?.width,
+            height: media.media_details?.height,
+          },
+          generation_info: {
+            prompt_used: generated.prompt,
+            aspect_ratio: args.aspect_ratio || "16:9",
+            style: args.style || "illustration",
+          },
+          usage_hint: `このメディア ID (${media.id}) を create_post の featured_media パラメータに指定してください`,
+        };
+      } finally {
+        // 一時ファイルが作成されていた場合はクリーンアップ
+        if (tempFilePath) {
+          cleanupTempFile(tempFilePath);
+        }
+      }
     }
 
     // ========== カテゴリ ==========
