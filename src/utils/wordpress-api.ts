@@ -2,6 +2,12 @@ import axios, { AxiosInstance, AxiosError } from "axios";
 import FormData from "form-data";
 import * as fs from "fs";
 import * as path from "path";
+import {
+  getCompressionConfig,
+  compressImage,
+  cleanupCompressionTemp,
+} from "./image-compression.js";
+import type { CompressionResult } from "../types/image-compression.js";
 import type {
   WPPost,
   WPPostCreate,
@@ -199,6 +205,8 @@ export class WordPressAPI {
       caption?: string;
     }
   ): Promise<WPMedia> {
+    let compressionResult: CompressionResult | null = null;
+
     try {
       const absolutePath = path.resolve(filePath);
 
@@ -206,8 +214,49 @@ export class WordPressAPI {
         throw new WordPressAPIError(`File not found: ${absolutePath}`);
       }
 
-      const filename = path.basename(absolutePath);
-      const fileBuffer = fs.readFileSync(absolutePath);
+      // Apply image compression if enabled
+      const config = getCompressionConfig();
+      if (config.enabled && this.isImageFile(absolutePath)) {
+        try {
+          compressionResult = await compressImage(absolutePath, config);
+
+          if (compressionResult.compressed) {
+            const savedBytes =
+              compressionResult.originalSize - compressionResult.compressedSize;
+            const savedPercent = (
+              (savedBytes / compressionResult.originalSize) *
+              100
+            ).toFixed(1);
+            console.error(
+              `Image compressed: ${compressionResult.originalSize} -> ${compressionResult.compressedSize} bytes (${savedPercent}% saved). ${compressionResult.reason}`
+            );
+          }
+        } catch (compressionError) {
+          console.error("Image compression failed, using original:", compressionError);
+          compressionResult = {
+            compressed: false,
+            originalSize: fs.statSync(absolutePath).size,
+            compressedSize: fs.statSync(absolutePath).size,
+            filePath: absolutePath,
+            isTemporary: false,
+            reason: `Compression failed: ${compressionError instanceof Error ? compressionError.message : "Unknown error"}`,
+          };
+        }
+      } else {
+        compressionResult = {
+          compressed: false,
+          originalSize: fs.statSync(absolutePath).size,
+          compressedSize: fs.statSync(absolutePath).size,
+          filePath: absolutePath,
+          isTemporary: false,
+          reason: config.enabled ? "Not an image file" : "Compression disabled",
+        };
+      }
+
+      // Use compressed file path if available, otherwise original
+      const uploadPath = compressionResult.filePath;
+      const filename = path.basename(absolutePath); // Keep original filename
+      const fileBuffer = fs.readFileSync(uploadPath);
       const mimeType = this.getMimeType(filename);
 
       const formData = new FormData();
@@ -234,8 +283,30 @@ export class WordPressAPI {
 
       return response.data;
     } catch (error) {
-      this.handleError(error);
+      throw this.handleErrorWithCleanup(error, compressionResult);
+    } finally {
+      // Cleanup temporary compressed file
+      if (compressionResult?.isTemporary && compressionResult.filePath) {
+        cleanupCompressionTemp(compressionResult.filePath);
+      }
     }
+  }
+
+  private handleErrorWithCleanup(
+    error: unknown,
+    compressionResult: CompressionResult | null
+  ): never {
+    // Cleanup before throwing
+    if (compressionResult?.isTemporary && compressionResult.filePath) {
+      cleanupCompressionTemp(compressionResult.filePath);
+    }
+    this.handleError(error);
+  }
+
+  private isImageFile(filePath: string): boolean {
+    const ext = path.extname(filePath).toLowerCase();
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
+    return imageExtensions.includes(ext);
   }
 
   async getMedia(mediaId: number): Promise<WPMedia> {
