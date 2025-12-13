@@ -34,6 +34,46 @@ function renderImageBlock(token: Tokens.Image): string {
 }
 
 /**
+ * ネストされたリストをレンダリング（Gutenbergブロックコメントなし）
+ * トップレベルでないリストに使用
+ */
+function renderNestedList(token: Tokens.List, parser: any): string {
+  const tag = token.ordered ? "ol" : "ul";
+
+  let body = "";
+  for (const item of token.items) {
+    body += renderNestedListItem(item, parser);
+  }
+
+  return `<${tag}>${body}</${tag}>`;
+}
+
+/**
+ * ネストされたリストアイテムをレンダリング
+ */
+function renderNestedListItem(item: Tokens.ListItem, parser: any): string {
+  let content = "";
+
+  for (const token of item.tokens) {
+    if (token.type === "text") {
+      const textToken = token as Tokens.Text;
+      if (textToken.tokens) {
+        content += parser.parseInline(textToken.tokens);
+      } else {
+        content += textToken.text;
+      }
+    } else if (token.type === "list") {
+      // 再帰的にネストリストを処理
+      content += renderNestedList(token as Tokens.List, parser);
+    } else {
+      content += parser.parse([token]);
+    }
+  }
+
+  return `<li>${content.trim()}</li>`;
+}
+
+/**
  * Gutenberg ブロック用カスタムレンダラー
  */
 const gutenbergRenderer: Partial<Renderer> = {
@@ -115,8 +155,8 @@ const gutenbergRenderer: Partial<Renderer> = {
           content += textToken.text;
         }
       } else if (token.type === "list") {
-        // ネストされたリストの場合
-        content += this.list(token as Tokens.List);
+        // ネストされたリストの場合（Gutenbergブロックコメントなしで処理）
+        content += renderNestedList(token as Tokens.List, this.parser);
       } else {
         // その他のトークン
         content += this.parser.parse([token]);
