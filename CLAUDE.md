@@ -39,12 +39,13 @@ WORDPRESS_URL=https://... WORDPRESS_USERNAME=... WORDPRESS_APP_PASSWORD=... WP_P
 - `src/utils/gutenberg-renderer.ts` - Custom marked.js renderer converting Markdown to Gutenberg blocks
 - `src/utils/language-map.ts` - Language identifier mapping for Highlighting Code Block plugin
 - `src/utils/gemini-image.ts` - Gemini API client for AI image generation (featured images)
+- `src/utils/gemini-excerpt.ts` - Gemini API client for AI excerpt/meta description generation
 - `src/utils/image-compression.ts` - Image compression using sharp (size threshold, quality, resize)
 
 ### Types
 
 - `src/types/wordpress.ts` - TypeScript interfaces for WordPress REST API (WPPost, WPMedia, WPTaxonomy, WPTerm, etc.)
-- `src/types/gemini.ts` - TypeScript interfaces for Gemini API image generation
+- `src/types/gemini.ts` - TypeScript interfaces for Gemini API (image generation and excerpt generation)
 - `src/types/image-compression.ts` - TypeScript interfaces for image compression config and results
 
 ## Key Implementation Details
@@ -102,6 +103,17 @@ Automatic image compression using `sharp` library:
 - **Skipped formats**: GIF (animation), SVG (vector), PNG with transparency (alpha preservation)
 - **Supported formats**: JPEG, PNG (without alpha), WebP
 
+### SEO Excerpt Auto-Generation
+
+Automatic SEO-optimized excerpt (meta description) generation using Gemini AI:
+
+- **Trigger**: When `excerpt` is not provided in `create_post` or `create_post_from_file` and `GEMINI_API_KEY` is set
+- **Output**: 160-character SEO-optimized summary of the article
+- **Behavior**:
+  - Manual excerpt takes precedence (never overwritten)
+  - Graceful failure: post creation continues even if excerpt generation fails
+  - Works with both `create_post` and `create_post_from_file`
+
 ### Custom Post Type Support
 
 Set `WP_POST_TYPE` env var to use custom post types instead of default "posts". This changes the API endpoint from `/wp-json/wp/v2/posts` to `/wp-json/wp/v2/{post_type}`.
@@ -117,7 +129,7 @@ Set `WP_POST_TYPE` env var to use custom post types instead of default "posts". 
 **Optional:**
 
 - `WP_POST_TYPE` - Custom post type slug (default: "posts")
-- `GEMINI_API_KEY` or `GOOGLE_API_KEY` - Gemini API key (required for `generate_featured_image` tool)
+- `GEMINI_API_KEY` or `GOOGLE_API_KEY` - Gemini API key (required for `generate_featured_image` tool and auto excerpt generation)
 
 **Image Compression (all optional):**
 

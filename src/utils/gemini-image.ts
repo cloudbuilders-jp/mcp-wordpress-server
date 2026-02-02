@@ -20,7 +20,7 @@ export class GeminiAPIError extends Error {
 }
 
 // API キーの取得
-function getApiKey(): string {
+export function getApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) {
     throw new GeminiAPIError(

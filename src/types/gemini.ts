@@ -35,3 +35,16 @@ export interface GeneratedImage {
   mimeType: string;
   prompt: string;
 }
+
+// SEO Excerpt 生成用
+export interface GenerateExcerptOptions {
+  title: string;
+  content: string;
+  maxLength?: number; // デフォルト: 160文字
+}
+
+export interface GeneratedExcerpt {
+  excerpt: string;
+  characterCount: number;
+  promptUsed: string;
+}

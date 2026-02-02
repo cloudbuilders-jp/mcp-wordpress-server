@@ -23,6 +23,7 @@ import {
   isGeminiConfigured,
   GeminiAPIError,
 } from "./utils/gemini-image.js";
+import { generateExcerpt } from "./utils/gemini-excerpt.js";
 import type { AspectRatio, ImageStyle } from "./types/gemini.js";
 import { postTools } from "./tools/posts.js";
 import { mediaTools, categoryTools, tagTools, taxonomyTools } from "./tools/media.js";
@@ -177,13 +178,31 @@ async function handleToolCall(
         }
       }
 
+      // Excerpt 自動生成（未指定時のみ）
+      let finalExcerpt = args.excerpt as string | undefined;
+      if (!finalExcerpt && isGeminiConfigured()) {
+        try {
+          const excerptResult = await generateExcerpt({
+            title: args.title as string,
+            content: content, // Markdown元テキストを使用
+          });
+          finalExcerpt = excerptResult.excerpt;
+          console.error(
+            `Auto-generated excerpt (${excerptResult.characterCount} chars)`
+          );
+        } catch (error) {
+          // Excerpt生成失敗は警告のみ（投稿作成は継続）
+          console.error("Failed to generate excerpt:", error);
+        }
+      }
+
       const post = await wpAPI.createPost({
         title: args.title as string,
         content: htmlContent,
         status: (args.status as "publish" | "draft" | "pending" | "private") || "draft",
         categories: args.categories as number[],
         tags: args.tags as number[],
-        excerpt: args.excerpt as string,
+        excerpt: finalExcerpt,
         featured_media: args.featured_media as number,
       });
 
@@ -228,12 +247,31 @@ async function handleToolCall(
 
       const htmlContent = convertToGutenbergBlocks(markdown);
 
+      // Excerpt 自動生成（Gemini API設定時のみ）
+      let finalExcerpt: string | undefined;
+      if (isGeminiConfigured()) {
+        try {
+          const excerptResult = await generateExcerpt({
+            title,
+            content: markdown, // Markdown元テキストを使用
+          });
+          finalExcerpt = excerptResult.excerpt;
+          console.error(
+            `Auto-generated excerpt (${excerptResult.characterCount} chars)`
+          );
+        } catch (error) {
+          // Excerpt生成失敗は警告のみ（投稿作成は継続）
+          console.error("Failed to generate excerpt:", error);
+        }
+      }
+
       const post = await wpAPI.createPost({
         title,
         content: htmlContent,
         status: (args.status as "publish" | "draft" | "pending" | "private") || "draft",
         categories: args.categories as number[],
         tags: args.tags as number[],
+        excerpt: finalExcerpt,
         featured_media: args.featured_media as number,
       });
 
