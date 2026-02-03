@@ -23,9 +23,70 @@ WORDPRESS_URL=https://... WORDPRESS_USERNAME=... WORDPRESS_APP_PASSWORD=... WP_P
 
 ## Architecture
 
-### Entry Point
+### Directory Structure
 
-- `src/index.ts` - MCP server setup and tool call handler (switch statement routing)
+```
+src/
+├── index.ts              # Entry point (minimal - just starts server)
+├── server.ts             # MCP server setup and routing
+├── config/
+│   └── environment.ts    # Environment variable management with Zod validation
+├── handlers/             # MCP tool handlers (business logic)
+│   ├── index.ts          # Handler routing map
+│   ├── post-handler.ts   # Post-related handlers
+│   ├── media-handler.ts  # Media-related handlers
+│   └── taxonomy-handler.ts # Taxonomy-related handlers
+├── services/             # Business logic layer
+│   ├── post-service.ts   # Post creation/update logic
+│   ├── media-service.ts  # Media upload logic
+│   └── image-upload-pipeline.ts # Shared image upload pipeline
+├── schemas/              # Zod validation schemas
+│   ├── post-schemas.ts   # Post tool input schemas
+│   ├── media-schemas.ts  # Media tool input schemas
+│   └── taxonomy-schemas.ts # Taxonomy tool input schemas
+├── tools/                # MCP tool definitions (JSON Schema)
+│   ├── posts.ts          # Post tool schemas
+│   └── media.ts          # Media/taxonomy tool schemas
+├── utils/                # Low-level utilities
+│   ├── wordpress-api.ts  # WordPress REST API client
+│   ├── markdown.ts       # Markdown processing
+│   ├── gutenberg-renderer.ts # Gutenberg block conversion
+│   ├── gemini-image.ts   # Gemini image generation
+│   ├── gemini-excerpt.ts # Gemini excerpt generation
+│   ├── image-compression.ts # Image compression
+│   └── language-map.ts   # Code language mapping
+└── types/                # TypeScript type definitions
+    ├── wordpress.ts      # WordPress API types
+    ├── gemini.ts         # Gemini API types
+    ├── image-compression.ts # Compression types
+    └── handler.ts        # Handler context types
+```
+
+### Layer Responsibilities
+
+1. **Entry Point** (`index.ts`, `server.ts`)
+   - MCP server initialization
+   - Tool routing via handler map (no switch statement)
+   - Error response formatting
+
+2. **Handlers** (`handlers/`)
+   - Input validation with Zod schemas
+   - Delegate to services for business logic
+   - Format response for MCP
+
+3. **Services** (`services/`)
+   - Core business logic
+   - Orchestrate multiple operations (Markdown processing, image upload, etc.)
+   - Reusable across handlers
+
+4. **Schemas** (`schemas/`)
+   - Zod schemas for type-safe input validation
+   - Eliminates unsafe type casts (`args as number`)
+
+5. **Utils** (`utils/`)
+   - Low-level utilities
+   - External API clients (WordPress, Gemini)
+   - Pure functions
 
 ### Tool Definitions
 
@@ -41,12 +102,6 @@ WORDPRESS_URL=https://... WORDPRESS_USERNAME=... WORDPRESS_APP_PASSWORD=... WP_P
 - `src/utils/gemini-image.ts` - Gemini API client for AI image generation (featured images)
 - `src/utils/gemini-excerpt.ts` - Gemini API client for AI excerpt/meta description generation
 - `src/utils/image-compression.ts` - Image compression using sharp (size threshold, quality, resize)
-
-### Types
-
-- `src/types/wordpress.ts` - TypeScript interfaces for WordPress REST API (WPPost, WPMedia, WPTaxonomy, WPTerm, etc.)
-- `src/types/gemini.ts` - TypeScript interfaces for Gemini API (image generation and excerpt generation)
-- `src/types/image-compression.ts` - TypeScript interfaces for image compression config and results
 
 ## Key Implementation Details
 
@@ -76,6 +131,13 @@ WORDPRESS_URL=https://... WORDPRESS_USERNAME=... WORDPRESS_APP_PASSWORD=... WP_P
 - `get_taxonomy_terms` / `create_taxonomy_term` - Manage taxonomy terms
 - `set_post_terms` - Assign taxonomy terms to a post
 
+### Adding a New Tool
+
+1. Add tool schema to `src/tools/posts.ts` or `src/tools/media.ts`
+2. Add Zod validation schema to `src/schemas/`
+3. Add handler function to `src/handlers/`
+4. Register handler in `src/handlers/index.ts`
+
 ### Markdown to Gutenberg Conversion
 
 The custom renderer in `gutenberg-renderer.ts` wraps each element with Gutenberg block comments:
@@ -86,11 +148,11 @@ The custom renderer in `gutenberg-renderer.ts` wraps each element with Gutenberg
 
 ### Image Handling
 
-Local images in Markdown (`![alt](./path/to/image.png)`) are:
+Local images in Markdown (`![alt](./path/to/image.png)`) are processed by `ImageUploadPipeline`:
 
-1. Detected via regex in `extractLocalImages()`
-2. Uploaded to WordPress media library via `wpAPI.uploadMedia()`
-3. Automatically compressed if over size threshold (see Image Compression)
+1. Detected via regex in `extractLocalImages()` (markdown.ts)
+2. Uploaded to WordPress media library via `ImageUploadPipeline.uploadAndReplace()`
+3. Automatically compressed if over size threshold
 4. Replaced with WordPress URLs in content before posting
 
 ### Image Compression
@@ -149,6 +211,7 @@ Set `WP_POST_TYPE` env var to use custom post types instead of default "posts". 
 - `marked` - Markdown parser (v15)
 - `sharp` - Image processing and compression
 - `@google/genai` - Gemini API client for AI image generation
+- `zod` - Schema validation and type inference
 
 **Dev:**
 
