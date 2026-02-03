@@ -82,10 +82,7 @@ export async function handleCreatePost(args: unknown, ctx: HandlerContext) {
 /**
  * create_post_from_file ハンドラー
  */
-export async function handleCreatePostFromFile(
-  args: unknown,
-  ctx: HandlerContext
-) {
+export async function handleCreatePostFromFile(args: unknown, ctx: HandlerContext) {
   const input = createPostFromFileSchema.parse(args);
 
   const result = await PostService.createPostFromFile(input, ctx);
@@ -137,9 +134,7 @@ export async function handleDeletePost(args: unknown, ctx: HandlerContext) {
 
   return {
     success: true,
-    message: input.force
-      ? '投稿を完全に削除しました'
-      : '投稿をゴミ箱に移動しました',
+    message: input.force ? '投稿を完全に削除しました' : '投稿をゴミ箱に移動しました',
     deleted_post: {
       id: result.previous.id,
       title: getDisplayText(result.previous.title),

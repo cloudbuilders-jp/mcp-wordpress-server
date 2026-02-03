@@ -3,19 +3,19 @@
  * コードブロックには Highlighting Code Block プラグインを使用
  */
 
-import { marked, Renderer, Tokens } from "marked";
-import { getLanguageMapping } from "./language-map.js";
+import { marked, Renderer, Tokens } from 'marked';
+import { getLanguageMapping } from './language-map.js';
 
 /**
  * HTML特殊文字をエスケープ
  */
 function escapeHtml(text: string): string {
   return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 /**
@@ -23,8 +23,8 @@ function escapeHtml(text: string): string {
  * ブロックレベルの画像（単独行の画像）用
  */
 function renderImageBlock(token: Tokens.Image): string {
-  const altAttr = token.text ? ` alt="${escapeHtml(token.text)}"` : "";
-  const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : "";
+  const altAttr = token.text ? ` alt="${escapeHtml(token.text)}"` : '';
+  const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : '';
 
   return (
     `<!-- wp:image -->\n` +
@@ -38,9 +38,9 @@ function renderImageBlock(token: Tokens.Image): string {
  * トップレベルでないリストに使用
  */
 function renderNestedList(token: Tokens.List, parser: any): string {
-  const tag = token.ordered ? "ol" : "ul";
+  const tag = token.ordered ? 'ol' : 'ul';
 
-  let body = "";
+  let body = '';
   for (const item of token.items) {
     body += renderNestedListItem(item, parser);
   }
@@ -52,17 +52,17 @@ function renderNestedList(token: Tokens.List, parser: any): string {
  * ネストされたリストアイテムをレンダリング
  */
 function renderNestedListItem(item: Tokens.ListItem, parser: any): string {
-  let content = "";
+  let content = '';
 
   for (const token of item.tokens) {
-    if (token.type === "text") {
+    if (token.type === 'text') {
       const textToken = token as Tokens.Text;
       if (textToken.tokens) {
         content += parser.parseInline(textToken.tokens);
       } else {
         content += textToken.text;
       }
-    } else if (token.type === "list") {
+    } else if (token.type === 'list') {
       // 再帰的にネストリストを処理
       content += renderNestedList(token as Tokens.List, parser);
     } else {
@@ -107,13 +107,13 @@ const gutenbergRenderer: Partial<Renderer> = {
   paragraph(this: Renderer, token: Tokens.Paragraph): string {
     // 段落が画像のみを含む場合、画像ブロックを直接出力
     // marked.js は単独行の画像も段落としてパースするため、この処理が必要
-    if (token.tokens.length === 1 && token.tokens[0].type === "image") {
+    if (token.tokens.length === 1 && token.tokens[0].type === 'image') {
       return renderImageBlock(token.tokens[0] as Tokens.Image);
     }
 
     const content = this.parser.parseInline(token.tokens);
     // 空の段落はスキップ
-    if (!content.trim()) return "";
+    if (!content.trim()) return '';
     return `<!-- wp:paragraph -->\n<p>${content}</p>\n<!-- /wp:paragraph -->\n\n`;
   },
 
@@ -130,10 +130,10 @@ const gutenbergRenderer: Partial<Renderer> = {
 
   // リスト
   list(this: Renderer, token: Tokens.List): string {
-    const tag = token.ordered ? "ol" : "ul";
-    const attrs = token.ordered ? ` {"ordered":true}` : "";
+    const tag = token.ordered ? 'ol' : 'ul';
+    const attrs = token.ordered ? ` {"ordered":true}` : '';
 
-    let body = "";
+    let body = '';
     for (const item of token.items) {
       body += this.listitem(item);
     }
@@ -143,10 +143,10 @@ const gutenbergRenderer: Partial<Renderer> = {
 
   // リストアイテム
   listitem(this: Renderer, item: Tokens.ListItem): string {
-    let content = "";
+    let content = '';
 
     for (const token of item.tokens) {
-      if (token.type === "text") {
+      if (token.type === 'text') {
         // テキストトークンの場合、インライン要素として処理
         const textToken = token as Tokens.Text;
         if (textToken.tokens) {
@@ -154,7 +154,7 @@ const gutenbergRenderer: Partial<Renderer> = {
         } else {
           content += textToken.text;
         }
-      } else if (token.type === "list") {
+      } else if (token.type === 'list') {
         // ネストされたリストの場合（Gutenbergブロックコメントなしで処理）
         content += renderNestedList(token as Tokens.List, this.parser);
       } else {
@@ -169,9 +169,9 @@ const gutenbergRenderer: Partial<Renderer> = {
   // 引用
   blockquote(this: Renderer, token: Tokens.Blockquote): string {
     // 内部コンテンツを処理
-    let innerContent = "";
+    let innerContent = '';
     for (const t of token.tokens) {
-      if (t.type === "paragraph") {
+      if (t.type === 'paragraph') {
         const paragraphToken = t as Tokens.Paragraph;
         innerContent += `<p>${this.parser.parseInline(paragraphToken.tokens)}</p>`;
       } else {
@@ -190,8 +190,8 @@ const gutenbergRenderer: Partial<Renderer> = {
   // 注: ブロックレベルの画像は paragraph() 内で renderImageBlock() を使用して処理される
   // この関数はテキスト中に埋め込まれた画像（インライン画像）用
   image(this: Renderer, token: Tokens.Image): string {
-    const altAttr = token.text ? ` alt="${escapeHtml(token.text)}"` : "";
-    const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : "";
+    const altAttr = token.text ? ` alt="${escapeHtml(token.text)}"` : '';
+    const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : '';
     return `<img src="${token.href}"${altAttr}${titleAttr}/>`;
   },
 
@@ -202,23 +202,23 @@ const gutenbergRenderer: Partial<Renderer> = {
 
   // テーブル
   table(this: Renderer, token: Tokens.Table): string {
-    let header = "<thead><tr>";
+    let header = '<thead><tr>';
     for (const cell of token.header) {
-      const align = cell.align ? ` style="text-align:${cell.align}"` : "";
+      const align = cell.align ? ` style="text-align:${cell.align}"` : '';
       header += `<th${align}>${this.parser.parseInline(cell.tokens)}</th>`;
     }
-    header += "</tr></thead>";
+    header += '</tr></thead>';
 
-    let body = "<tbody>";
+    let body = '<tbody>';
     for (const row of token.rows) {
-      body += "<tr>";
+      body += '<tr>';
       for (const cell of row) {
-        const align = cell.align ? ` style="text-align:${cell.align}"` : "";
+        const align = cell.align ? ` style="text-align:${cell.align}"` : '';
         body += `<td${align}>${this.parser.parseInline(cell.tokens)}</td>`;
       }
-      body += "</tr>";
+      body += '</tr>';
     }
-    body += "</tbody>";
+    body += '</tbody>';
 
     return (
       `<!-- wp:table -->\n` +
@@ -245,7 +245,7 @@ const gutenbergRenderer: Partial<Renderer> = {
   // リンク
   link(this: Renderer, token: Tokens.Link): string {
     const text = this.parser.parseInline(token.tokens);
-    const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : "";
+    const titleAttr = token.title ? ` title="${escapeHtml(token.title)}"` : '';
     return `<a href="${token.href}"${titleAttr}>${text}</a>`;
   },
 
@@ -256,14 +256,14 @@ const gutenbergRenderer: Partial<Renderer> = {
 
   // 改行
   br(): string {
-    return "<br />";
+    return '<br />';
   },
 
   // 生HTML
   html(token: Tokens.HTML): string {
     // HTMLブロックとしてラップ
     const trimmed = token.text.trim();
-    if (!trimmed) return "";
+    if (!trimmed) return '';
     return `<!-- wp:html -->\n${trimmed}\n<!-- /wp:html -->\n\n`;
   },
 };
@@ -274,7 +274,7 @@ const gutenbergRenderer: Partial<Renderer> = {
  */
 export function convertToGutenbergBlocks(markdown: string): string {
   // タイトル（最初の H1）を除去
-  const contentWithoutTitle = markdown.replace(/^#\s+.+\n*/m, "");
+  const contentWithoutTitle = markdown.replace(/^#\s+.+\n*/m, '');
 
   // カスタムレンダラーを使用
   const renderer = new Renderer();
@@ -289,5 +289,5 @@ export function convertToGutenbergBlocks(markdown: string): string {
   const result = marked.parse(contentWithoutTitle) as string;
 
   // 末尾の余分な空行を整理
-  return result.trim() + "\n";
+  return result.trim() + '\n';
 }

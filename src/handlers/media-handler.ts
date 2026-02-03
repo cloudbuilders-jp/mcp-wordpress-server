@@ -55,10 +55,7 @@ export async function handleGetMedia(args: unknown, ctx: HandlerContext) {
 export async function handleDeleteMedia(args: unknown, ctx: HandlerContext) {
   const input = deleteMediaSchema.parse(args);
 
-  const result = await ctx.wpAPI.deleteMedia(
-    input.media_id,
-    input.force ?? true
-  );
+  const result = await ctx.wpAPI.deleteMedia(input.media_id, input.force ?? true);
 
   return {
     success: true,
@@ -74,10 +71,7 @@ export async function handleDeleteMedia(args: unknown, ctx: HandlerContext) {
 /**
  * generate_featured_image ハンドラー
  */
-export async function handleGenerateFeaturedImage(
-  args: unknown,
-  ctx: HandlerContext
-) {
+export async function handleGenerateFeaturedImage(args: unknown, ctx: HandlerContext) {
   const input = generateFeaturedImageSchema.parse(args);
 
   const result = await MediaService.generateFeaturedImage(input, ctx);

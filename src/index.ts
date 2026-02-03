@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { startServer } from "./server.js";
+import { startServer } from './server.js';
 
 /**
  * WordPress MCP Server エントリーポイント
@@ -10,6 +10,6 @@ import { startServer } from "./server.js";
  * 機能を提供します。
  */
 startServer().catch((error) => {
-  console.error("Server error:", error);
+  console.error('Server error:', error);
   process.exit(1);
 });

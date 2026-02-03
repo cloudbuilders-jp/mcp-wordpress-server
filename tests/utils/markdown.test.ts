@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  extractTitle,
-  extractLocalImages,
-  replaceImagePaths,
-} from '../../src/utils/markdown.js';
+import { extractTitle, extractLocalImages, replaceImagePaths } from '../../src/utils/markdown.js';
 
 describe('extractTitle', () => {
   it('H1タイトルを抽出する', () => {
@@ -126,9 +122,7 @@ Some text
 describe('replaceImagePaths', () => {
   it('単一のパスを置換する', () => {
     const markdown = '![alt](./local.png)';
-    const replacements = new Map([
-      ['./local.png', 'https://wp.com/uploaded.png']
-    ]);
+    const replacements = new Map([['./local.png', 'https://wp.com/uploaded.png']]);
 
     const result = replaceImagePaths(markdown, replacements);
     expect(result).toBe('![alt](https://wp.com/uploaded.png)');
@@ -141,7 +135,7 @@ describe('replaceImagePaths', () => {
     `;
     const replacements = new Map([
       ['./a.png', 'https://wp.com/a.png'],
-      ['./b.jpg', 'https://wp.com/b.jpg']
+      ['./b.jpg', 'https://wp.com/b.jpg'],
     ]);
 
     const result = replaceImagePaths(markdown, replacements);
@@ -151,9 +145,7 @@ describe('replaceImagePaths', () => {
 
   it('altTextを保持する', () => {
     const markdown = '![My Alt Text](./image.png)';
-    const replacements = new Map([
-      ['./image.png', 'https://wp.com/image.png']
-    ]);
+    const replacements = new Map([['./image.png', 'https://wp.com/image.png']]);
 
     const result = replaceImagePaths(markdown, replacements);
     expect(result).toBe('![My Alt Text](https://wp.com/image.png)');
@@ -161,9 +153,7 @@ describe('replaceImagePaths', () => {
 
   it('置換対象がない場合は元のMarkdownを返す', () => {
     const markdown = '![alt](./not-replaced.png)';
-    const replacements = new Map([
-      ['./other.png', 'https://wp.com/other.png']
-    ]);
+    const replacements = new Map([['./other.png', 'https://wp.com/other.png']]);
 
     const result = replaceImagePaths(markdown, replacements);
     expect(result).toBe(markdown);
@@ -179,9 +169,7 @@ describe('replaceImagePaths', () => {
 
   it('特殊文字を含むパスを正しく置換する', () => {
     const markdown = '![alt](./path (1).png)';
-    const replacements = new Map([
-      ['./path (1).png', 'https://wp.com/path-1.png']
-    ]);
+    const replacements = new Map([['./path (1).png', 'https://wp.com/path-1.png']]);
 
     const result = replaceImagePaths(markdown, replacements);
     expect(result).toBe('![alt](https://wp.com/path-1.png)');
@@ -192,9 +180,7 @@ describe('replaceImagePaths', () => {
 ![first](./same.png)
 ![second](./same.png)
     `;
-    const replacements = new Map([
-      ['./same.png', 'https://wp.com/same.png']
-    ]);
+    const replacements = new Map([['./same.png', 'https://wp.com/same.png']]);
 
     const result = replaceImagePaths(markdown, replacements);
     expect(result.match(/https:\/\/wp\.com\/same\.png/g)).toHaveLength(2);

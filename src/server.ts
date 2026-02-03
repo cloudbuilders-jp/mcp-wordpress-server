@@ -1,23 +1,15 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { ZodError } from "zod";
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { ZodError } from 'zod';
 
-import { WordPressAPI, WordPressAPIError } from "./utils/wordpress-api.js";
-import { GeminiAPIError } from "./utils/gemini-image.js";
-import { postTools } from "./tools/posts.js";
-import {
-  mediaTools,
-  categoryTools,
-  tagTools,
-  taxonomyTools,
-} from "./tools/media.js";
-import { loadConfig } from "./config/environment.js";
-import { getHandler } from "./handlers/index.js";
-import type { HandlerContext } from "./types/handler.js";
+import { WordPressAPI, WordPressAPIError } from './utils/wordpress-api.js';
+import { GeminiAPIError } from './utils/gemini-image.js';
+import { postTools } from './tools/posts.js';
+import { mediaTools, categoryTools, tagTools, taxonomyTools } from './tools/media.js';
+import { loadConfig } from './config/environment.js';
+import { getHandler } from './handlers/index.js';
+import type { HandlerContext } from './types/handler.js';
 
 /**
  * MCPサーバーを作成して起動する
@@ -43,8 +35,8 @@ export async function createServer() {
   // MCP Server
   const server = new Server(
     {
-      name: "wordpress-mcp-server",
-      version: "1.0.0",
+      name: 'wordpress-mcp-server',
+      version: '1.0.0',
     },
     {
       capabilities: {
@@ -54,13 +46,7 @@ export async function createServer() {
   );
 
   // すべての Tools を結合
-  const allTools = [
-    ...postTools,
-    ...mediaTools,
-    ...categoryTools,
-    ...tagTools,
-    ...taxonomyTools,
-  ];
+  const allTools = [...postTools, ...mediaTools, ...categoryTools, ...tagTools, ...taxonomyTools];
 
   // Tool リスト
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -78,11 +64,8 @@ export async function createServer() {
       return {
         content: [
           {
-            type: "text",
-            text:
-              typeof result === "string"
-                ? result
-                : JSON.stringify(result, null, 2),
+            type: 'text',
+            text: typeof result === 'string' ? result : JSON.stringify(result, null, 2),
           },
         ],
       };
@@ -106,17 +89,17 @@ function formatErrorResponse(error: unknown) {
   } else if (error instanceof WordPressAPIError) {
     errorMessage = `WordPress API Error: ${error.message}`;
   } else if (error instanceof GeminiAPIError) {
-    errorMessage = `Gemini API Error: ${error.message} (${error.code || "UNKNOWN"})`;
+    errorMessage = `Gemini API Error: ${error.message} (${error.code || 'UNKNOWN'})`;
   } else if (error instanceof Error) {
     errorMessage = error.message;
   } else {
-    errorMessage = "Unknown error occurred";
+    errorMessage = 'Unknown error occurred';
   }
 
   return {
     content: [
       {
-        type: "text",
+        type: 'text',
         text: JSON.stringify({ error: errorMessage }, null, 2),
       },
     ],
@@ -131,5 +114,5 @@ export async function startServer() {
   const server = await createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("WordPress MCP Server started");
+  console.error('WordPress MCP Server started');
 }

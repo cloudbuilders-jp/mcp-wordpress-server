@@ -34,10 +34,7 @@ export class PostService {
   /**
    * 投稿を作成する
    */
-  static async createPost(
-    input: CreatePostInput,
-    ctx: HandlerContext
-  ): Promise<CreatePostResult> {
+  static async createPost(input: CreatePostInput, ctx: HandlerContext): Promise<CreatePostResult> {
     const isMarkdown = input.is_markdown !== false;
     let content = input.content;
     let htmlContent = content;
@@ -45,22 +42,14 @@ export class PostService {
 
     // Markdown処理
     if (isMarkdown) {
-      const result = await this.processMarkdownContent(
-        content,
-        input.base_path,
-        ctx
-      );
+      const result = await this.processMarkdownContent(content, input.base_path, ctx);
       htmlContent = result.htmlContent;
       uploadedImageCount = result.uploadedImageCount;
       content = result.processedMarkdown;
     }
 
     // Excerpt自動生成
-    const finalExcerpt = await this.generateExcerptIfNeeded(
-      input.excerpt,
-      input.title,
-      content
-    );
+    const finalExcerpt = await this.generateExcerptIfNeeded(input.excerpt, input.title, content);
 
     // WordPress投稿作成
     const post = await ctx.wpAPI.createPost({
@@ -87,8 +76,7 @@ export class PostService {
     const processed = processMarkdownFile(filePath);
 
     // タイトルはファイルから抽出、なければファイル名を使用
-    const title =
-      processed.title || path.basename(filePath, path.extname(filePath));
+    const title = processed.title || path.basename(filePath, path.extname(filePath));
 
     // Markdownコンテンツを読み込み
     let markdown = fs.readFileSync(path.resolve(filePath), 'utf-8');
@@ -108,11 +96,7 @@ export class PostService {
     const htmlContent = convertToGutenbergBlocks(markdown);
 
     // Excerpt自動生成
-    const finalExcerpt = await this.generateExcerptIfNeeded(
-      undefined,
-      title,
-      markdown
-    );
+    const finalExcerpt = await this.generateExcerptIfNeeded(undefined, title, markdown);
 
     // WordPress投稿作成
     const post = await ctx.wpAPI.createPost({
@@ -131,20 +115,13 @@ export class PostService {
   /**
    * 投稿を更新する
    */
-  static async updatePost(
-    input: UpdatePostInput,
-    ctx: HandlerContext
-  ): Promise<WPPost> {
+  static async updatePost(input: UpdatePostInput, ctx: HandlerContext): Promise<WPPost> {
     const isMarkdown = input.is_markdown !== false;
     let htmlContent: string | undefined;
 
     if (input.content) {
       if (isMarkdown) {
-        const result = await this.processMarkdownContent(
-          input.content,
-          input.base_path,
-          ctx
-        );
+        const result = await this.processMarkdownContent(input.content, input.base_path, ctx);
         htmlContent = result.htmlContent;
       } else {
         htmlContent = input.content;
@@ -231,9 +208,7 @@ export class PostService {
 
     try {
       const result = await generateExcerpt({ title, content });
-      console.error(
-        `Auto-generated excerpt (${result.characterCount} chars)`
-      );
+      console.error(`Auto-generated excerpt (${result.characterCount} chars)`);
       return result.excerpt;
     } catch (error) {
       // Excerpt生成失敗は警告のみ（投稿作成は継続）

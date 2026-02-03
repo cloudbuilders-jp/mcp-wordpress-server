@@ -7,7 +7,7 @@ export interface WPPost {
   modified: string;
   modified_gmt: string;
   slug: string;
-  status: "publish" | "future" | "draft" | "pending" | "private";
+  status: 'publish' | 'future' | 'draft' | 'pending' | 'private';
   type: string;
   link: string;
   title: {
@@ -33,7 +33,7 @@ export interface WPPost {
 export interface WPPostCreate {
   title: string;
   content: string;
-  status?: "publish" | "draft" | "pending" | "private";
+  status?: 'publish' | 'draft' | 'pending' | 'private';
   excerpt?: string;
   categories?: number[];
   tags?: number[];
@@ -43,7 +43,7 @@ export interface WPPostCreate {
 export interface WPPostUpdate {
   title?: string;
   content?: string;
-  status?: "publish" | "draft" | "pending" | "private";
+  status?: 'publish' | 'draft' | 'pending' | 'private';
   excerpt?: string;
   categories?: number[];
   tags?: number[];

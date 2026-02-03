@@ -6,9 +6,9 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   // WordPress必須設定
-  WORDPRESS_URL: z.string().url("WORDPRESS_URL must be a valid URL"),
-  WORDPRESS_USERNAME: z.string().min(1, "WORDPRESS_USERNAME is required"),
-  WORDPRESS_APP_PASSWORD: z.string().min(1, "WORDPRESS_APP_PASSWORD is required"),
+  WORDPRESS_URL: z.string().url('WORDPRESS_URL must be a valid URL'),
+  WORDPRESS_USERNAME: z.string().min(1, 'WORDPRESS_USERNAME is required'),
+  WORDPRESS_APP_PASSWORD: z.string().min(1, 'WORDPRESS_APP_PASSWORD is required'),
   WP_POST_TYPE: z.string().default('posts'),
 
   // Gemini API（オプショナル）
@@ -42,4 +42,3 @@ export function loadConfig(): AppConfig {
   }
   return result.data;
 }
-

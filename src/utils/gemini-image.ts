@@ -1,12 +1,8 @@
-import { GoogleGenAI } from "@google/genai";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
-import type {
-  GenerateImageOptions,
-  GeneratedImage,
-  ImageStyle,
-} from "../types/gemini.js";
+import { GoogleGenAI } from '@google/genai';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import type { GenerateImageOptions, GeneratedImage, ImageStyle } from '../types/gemini.js';
 
 // エラークラス
 export class GeminiAPIError extends Error {
@@ -15,7 +11,7 @@ export class GeminiAPIError extends Error {
     public code?: string
   ) {
     super(message);
-    this.name = "GeminiAPIError";
+    this.name = 'GeminiAPIError';
   }
 }
 
@@ -24,8 +20,8 @@ export function getApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) {
     throw new GeminiAPIError(
-      "Gemini API key not configured. Set GEMINI_API_KEY or GOOGLE_API_KEY environment variable.",
-      "API_KEY_MISSING"
+      'Gemini API key not configured. Set GEMINI_API_KEY or GOOGLE_API_KEY environment variable.',
+      'API_KEY_MISSING'
     );
   }
   return apiKey;
@@ -38,7 +34,7 @@ export function isGeminiConfigured(): boolean {
 
 // プロンプト生成ロジック
 export function generateImagePrompt(options: GenerateImageOptions): string {
-  const { title, content, customPrompt, style = "illustration" } = options;
+  const { title, content, customPrompt, style = 'illustration' } = options;
 
   // カスタムプロンプトが指定されている場合はそれを使用
   if (customPrompt) {
@@ -47,21 +43,21 @@ export function generateImagePrompt(options: GenerateImageOptions): string {
 
   // 本文から要約を抽出（約500文字まで）
   const contentSummary = content
-    .replace(/^#.*$/gm, "") // 見出しを除去
-    .replace(/!\[.*?\]\(.*?\)/g, "") // 画像記法を除去
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // リンクをテキストに
-    .replace(/```[\s\S]*?```/g, "") // コードブロックを除去
-    .replace(/`[^`]+`/g, "") // インラインコードを除去
-    .replace(/\n+/g, " ") // 改行を空白に
+    .replace(/^#.*$/gm, '') // 見出しを除去
+    .replace(/!\[.*?\]\(.*?\)/g, '') // 画像記法を除去
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // リンクをテキストに
+    .replace(/```[\s\S]*?```/g, '') // コードブロックを除去
+    .replace(/`[^`]+`/g, '') // インラインコードを除去
+    .replace(/\n+/g, ' ') // 改行を空白に
     .trim()
     .slice(0, 500);
 
   // スタイル別のプロンプト修飾
   const styleModifiers: Record<ImageStyle, string> = {
-    photorealistic: "photorealistic, high quality, professional photography",
-    illustration: "digital illustration, vibrant colors, artistic",
-    abstract: "abstract art, modern design, creative composition",
-    minimalist: "minimalist design, clean lines, simple composition",
+    photorealistic: 'photorealistic, high quality, professional photography',
+    illustration: 'digital illustration, vibrant colors, artistic',
+    abstract: 'abstract art, modern design, creative composition',
+    minimalist: 'minimalist design, clean lines, simple composition',
   };
 
   const styleModifier = styleModifiers[style];
@@ -80,19 +76,17 @@ Requirements:
 }
 
 // 画像生成
-export async function generateImage(
-  options: GenerateImageOptions
-): Promise<GeneratedImage> {
+export async function generateImage(options: GenerateImageOptions): Promise<GeneratedImage> {
   const apiKey = getApiKey();
   const ai = new GoogleGenAI({ apiKey });
 
   const prompt = generateImagePrompt(options);
 
   const config: {
-    responseModalities: ("TEXT" | "IMAGE")[];
+    responseModalities: ('TEXT' | 'IMAGE')[];
     imageConfig?: { aspectRatio?: string };
   } = {
-    responseModalities: ["IMAGE"],
+    responseModalities: ['IMAGE'],
   };
 
   // アスペクト比の設定（imageConfig 内にネストする必要がある）
@@ -102,7 +96,7 @@ export async function generateImage(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview",
+      model: 'gemini-3-pro-image-preview',
       contents: prompt,
       config,
     });
@@ -110,38 +104,32 @@ export async function generateImage(
     // レスポンスから画像データを抽出
     const candidates = response.candidates;
     if (!candidates || candidates.length === 0) {
-      throw new GeminiAPIError(
-        "No image generated from Gemini API",
-        "NO_CANDIDATES"
-      );
+      throw new GeminiAPIError('No image generated from Gemini API', 'NO_CANDIDATES');
     }
 
     const parts = candidates[0].content?.parts;
     if (!parts || parts.length === 0) {
-      throw new GeminiAPIError("No image data in response", "NO_PARTS");
+      throw new GeminiAPIError('No image data in response', 'NO_PARTS');
     }
 
     for (const part of parts) {
       if (part.inlineData && part.inlineData.data) {
         return {
           base64Data: part.inlineData.data,
-          mimeType: part.inlineData.mimeType || "image/png",
+          mimeType: part.inlineData.mimeType || 'image/png',
           prompt,
         };
       }
     }
 
-    throw new GeminiAPIError(
-      "No inline image data found in response",
-      "NO_IMAGE_DATA"
-    );
+    throw new GeminiAPIError('No inline image data found in response', 'NO_IMAGE_DATA');
   } catch (error) {
     if (error instanceof GeminiAPIError) {
       throw error;
     }
     throw new GeminiAPIError(
-      error instanceof Error ? error.message : "Unknown error during image generation",
-      "GENERATION_FAILED"
+      error instanceof Error ? error.message : 'Unknown error during image generation',
+      'GENERATION_FAILED'
     );
   }
 }
@@ -149,24 +137,21 @@ export async function generateImage(
 // MIME タイプから拡張子を取得
 function getExtensionFromMimeType(mimeType: string): string {
   const mimeToExt: Record<string, string> = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/gif": ".gif",
-    "image/webp": ".webp",
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
   };
-  return mimeToExt[mimeType] || ".png";
+  return mimeToExt[mimeType] || '.png';
 }
 
 // Base64データを一時ファイルに保存
-export async function saveImageToTempFile(
-  base64Data: string,
-  mimeType: string
-): Promise<string> {
+export async function saveImageToTempFile(base64Data: string, mimeType: string): Promise<string> {
   const ext = getExtensionFromMimeType(mimeType);
   const filename = `featured-image-${Date.now()}${ext}`;
   const tempPath = path.join(os.tmpdir(), filename);
 
-  const buffer = Buffer.from(base64Data, "base64");
+  const buffer = Buffer.from(base64Data, 'base64');
   fs.writeFileSync(tempPath, buffer);
 
   return tempPath;

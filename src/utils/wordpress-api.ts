@@ -1,13 +1,13 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
-import FormData from "form-data";
-import * as fs from "fs";
-import * as path from "path";
+import axios, { AxiosInstance, AxiosError } from 'axios';
+import FormData from 'form-data';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   getCompressionConfig,
   compressImage,
   cleanupCompressionTemp,
-} from "./image-compression.js";
-import type { CompressionResult } from "../types/image-compression.js";
+} from './image-compression.js';
+import type { CompressionResult } from '../types/image-compression.js';
 import type {
   WPPost,
   WPPostCreate,
@@ -21,7 +21,7 @@ import type {
   WPTaxonomy,
   WPTerm,
   WPTermCreate,
-} from "../types/wordpress.js";
+} from '../types/wordpress.js';
 
 export class WordPressAPIError extends Error {
   constructor(
@@ -30,7 +30,7 @@ export class WordPressAPIError extends Error {
     public wpError?: WPError
   ) {
     super(message);
-    this.name = "WordPressAPIError";
+    this.name = 'WordPressAPIError';
   }
 }
 
@@ -39,24 +39,17 @@ export class WordPressAPI {
   private baseURL: string;
   private postType: string;
 
-  constructor(
-    baseURL: string,
-    username: string,
-    appPassword: string,
-    postType: string = "posts"
-  ) {
-    this.baseURL = baseURL.replace(/\/$/, "");
+  constructor(baseURL: string, username: string, appPassword: string, postType: string = 'posts') {
+    this.baseURL = baseURL.replace(/\/$/, '');
     this.postType = postType;
 
-    const credentials = Buffer.from(`${username}:${appPassword}`).toString(
-      "base64"
-    );
+    const credentials = Buffer.from(`${username}:${appPassword}`).toString('base64');
 
     this.client = axios.create({
       baseURL: `${this.baseURL}/wp-json/wp/v2`,
       headers: {
         Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       timeout: 30000,
     });
@@ -75,36 +68,34 @@ export class WordPressAPI {
 
       if (status === 401) {
         throw new WordPressAPIError(
-          "Authentication failed. Please check your username and application password.",
+          'Authentication failed. Please check your username and application password.',
           status,
           wpError
         );
       }
       if (status === 403) {
         throw new WordPressAPIError(
-          "Permission denied. Your user may not have sufficient privileges.",
+          'Permission denied. Your user may not have sufficient privileges.',
           status,
           wpError
         );
       }
       if (status === 404) {
         throw new WordPressAPIError(
-          "Resource not found. Please check if the REST API is enabled.",
+          'Resource not found. Please check if the REST API is enabled.',
           status,
           wpError
         );
       }
 
       throw new WordPressAPIError(
-        wpError?.message || axiosError.message || "WordPress API request failed",
+        wpError?.message || axiosError.message || 'WordPress API request failed',
         status,
         wpError
       );
     }
 
-    throw new WordPressAPIError(
-      error instanceof Error ? error.message : "Unknown error occurred"
-    );
+    throw new WordPressAPIError(error instanceof Error ? error.message : 'Unknown error occurred');
   }
 
   // ========== 投稿 (Posts) ==========
@@ -122,11 +113,11 @@ export class WordPressAPI {
         params: {
           page: options?.page || 1,
           per_page: options?.perPage || 10,
-          status: options?.status || "any",
+          status: options?.status || 'any',
           search: options?.search,
-          categories: options?.categories?.join(","),
-          tags: options?.tags?.join(","),
-          context: "edit",
+          categories: options?.categories?.join(','),
+          tags: options?.tags?.join(','),
+          context: 'edit',
         },
       });
       return response.data;
@@ -137,12 +128,9 @@ export class WordPressAPI {
 
   async getPost(postId: number): Promise<WPPost> {
     try {
-      const response = await this.client.get<WPPost>(
-        `${this.getPostEndpoint()}/${postId}`,
-        {
-          params: { context: "edit" },
-        }
-      );
+      const response = await this.client.get<WPPost>(`${this.getPostEndpoint()}/${postId}`, {
+        params: { context: 'edit' },
+      });
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -154,7 +142,7 @@ export class WordPressAPI {
       const response = await this.client.post<WPPost>(this.getPostEndpoint(), {
         title: data.title,
         content: data.content,
-        status: data.status || "draft",
+        status: data.status || 'draft',
         excerpt: data.excerpt,
         categories: data.categories,
         tags: data.tags,
@@ -168,10 +156,7 @@ export class WordPressAPI {
 
   async updatePost(postId: number, data: WPPostUpdate): Promise<WPPost> {
     try {
-      const response = await this.client.post<WPPost>(
-        `${this.getPostEndpoint()}/${postId}`,
-        data
-      );
+      const response = await this.client.post<WPPost>(`${this.getPostEndpoint()}/${postId}`, data);
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -183,12 +168,9 @@ export class WordPressAPI {
     force: boolean = false
   ): Promise<{ deleted: boolean; previous: WPPost }> {
     try {
-      const response = await this.client.delete(
-        `${this.getPostEndpoint()}/${postId}`,
-        {
-          params: { force },
-        }
-      );
+      const response = await this.client.delete(`${this.getPostEndpoint()}/${postId}`, {
+        params: { force },
+      });
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -221,25 +203,21 @@ export class WordPressAPI {
           compressionResult = await compressImage(absolutePath, config);
 
           if (compressionResult.compressed) {
-            const savedBytes =
-              compressionResult.originalSize - compressionResult.compressedSize;
-            const savedPercent = (
-              (savedBytes / compressionResult.originalSize) *
-              100
-            ).toFixed(1);
+            const savedBytes = compressionResult.originalSize - compressionResult.compressedSize;
+            const savedPercent = ((savedBytes / compressionResult.originalSize) * 100).toFixed(1);
             console.error(
               `Image compressed: ${compressionResult.originalSize} -> ${compressionResult.compressedSize} bytes (${savedPercent}% saved). ${compressionResult.reason}`
             );
           }
         } catch (compressionError) {
-          console.error("Image compression failed, using original:", compressionError);
+          console.error('Image compression failed, using original:', compressionError);
           compressionResult = {
             compressed: false,
             originalSize: fs.statSync(absolutePath).size,
             compressedSize: fs.statSync(absolutePath).size,
             filePath: absolutePath,
             isTemporary: false,
-            reason: `Compression failed: ${compressionError instanceof Error ? compressionError.message : "Unknown error"}`,
+            reason: `Compression failed: ${compressionError instanceof Error ? compressionError.message : 'Unknown error'}`,
           };
         }
       } else {
@@ -249,7 +227,7 @@ export class WordPressAPI {
           compressedSize: fs.statSync(absolutePath).size,
           filePath: absolutePath,
           isTemporary: false,
-          reason: config.enabled ? "Not an image file" : "Compression disabled",
+          reason: config.enabled ? 'Not an image file' : 'Compression disabled',
         };
       }
 
@@ -260,22 +238,22 @@ export class WordPressAPI {
       const mimeType = this.getMimeType(filename);
 
       const formData = new FormData();
-      formData.append("file", fileBuffer, {
+      formData.append('file', fileBuffer, {
         filename,
         contentType: mimeType,
       });
 
       if (options?.title) {
-        formData.append("title", options.title);
+        formData.append('title', options.title);
       }
       if (options?.altText) {
-        formData.append("alt_text", options.altText);
+        formData.append('alt_text', options.altText);
       }
       if (options?.caption) {
-        formData.append("caption", options.caption);
+        formData.append('caption', options.caption);
       }
 
-      const response = await this.client.post<WPMedia>("/media", formData, {
+      const response = await this.client.post<WPMedia>('/media', formData, {
         headers: {
           ...formData.getHeaders(),
         },
@@ -305,7 +283,7 @@ export class WordPressAPI {
 
   private isImageFile(filePath: string): boolean {
     const ext = path.extname(filePath).toLowerCase();
-    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
     return imageExtensions.includes(ext);
   }
 
@@ -335,17 +313,17 @@ export class WordPressAPI {
   private getMimeType(filename: string): string {
     const ext = path.extname(filename).toLowerCase();
     const mimeTypes: Record<string, string> = {
-      ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg",
-      ".png": "image/png",
-      ".gif": "image/gif",
-      ".webp": "image/webp",
-      ".svg": "image/svg+xml",
-      ".pdf": "application/pdf",
-      ".mp4": "video/mp4",
-      ".webm": "video/webm",
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+      '.pdf': 'application/pdf',
+      '.mp4': 'video/mp4',
+      '.webm': 'video/webm',
     };
-    return mimeTypes[ext] || "application/octet-stream";
+    return mimeTypes[ext] || 'application/octet-stream';
   }
 
   // ========== カテゴリ (Categories) ==========
@@ -356,7 +334,7 @@ export class WordPressAPI {
     search?: string;
   }): Promise<WPCategory[]> {
     try {
-      const response = await this.client.get<WPCategory[]>("/categories", {
+      const response = await this.client.get<WPCategory[]>('/categories', {
         params: {
           page: options?.page || 1,
           per_page: options?.perPage || 100,
@@ -371,7 +349,7 @@ export class WordPressAPI {
 
   async createCategory(data: WPCategoryCreate): Promise<WPCategory> {
     try {
-      const response = await this.client.post<WPCategory>("/categories", {
+      const response = await this.client.post<WPCategory>('/categories', {
         name: data.name,
         slug: data.slug,
         description: data.description,
@@ -385,13 +363,9 @@ export class WordPressAPI {
 
   // ========== タグ (Tags) ==========
 
-  async getTags(options?: {
-    page?: number;
-    perPage?: number;
-    search?: string;
-  }): Promise<WPTag[]> {
+  async getTags(options?: { page?: number; perPage?: number; search?: string }): Promise<WPTag[]> {
     try {
-      const response = await this.client.get<WPTag[]>("/tags", {
+      const response = await this.client.get<WPTag[]>('/tags', {
         params: {
           page: options?.page || 1,
           per_page: options?.perPage || 100,
@@ -406,7 +380,7 @@ export class WordPressAPI {
 
   async createTag(data: WPTagCreate): Promise<WPTag> {
     try {
-      const response = await this.client.post<WPTag>("/tags", {
+      const response = await this.client.post<WPTag>('/tags', {
         name: data.name,
         slug: data.slug,
         description: data.description,
@@ -421,7 +395,7 @@ export class WordPressAPI {
 
   async getTaxonomies(): Promise<Record<string, WPTaxonomy>> {
     try {
-      const response = await this.client.get<Record<string, WPTaxonomy>>("/taxonomies");
+      const response = await this.client.get<Record<string, WPTaxonomy>>('/taxonomies');
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -454,10 +428,7 @@ export class WordPressAPI {
     }
   }
 
-  async createTaxonomyTerm(
-    taxonomy: string,
-    data: WPTermCreate
-  ): Promise<WPTerm> {
+  async createTaxonomyTerm(taxonomy: string, data: WPTermCreate): Promise<WPTerm> {
     try {
       const response = await this.client.post<WPTerm>(`/${taxonomy}`, {
         name: data.name,
@@ -477,12 +448,9 @@ export class WordPressAPI {
     termIds: number[]
   ): Promise<WPPost> {
     try {
-      const response = await this.client.post<WPPost>(
-        `${this.getPostEndpoint()}/${postId}`,
-        {
-          [taxonomy]: termIds,
-        }
-      );
+      const response = await this.client.post<WPPost>(`${this.getPostEndpoint()}/${postId}`, {
+        [taxonomy]: termIds,
+      });
       return response.data;
     } catch (error) {
       this.handleError(error);

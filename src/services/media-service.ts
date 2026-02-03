@@ -1,9 +1,6 @@
 import type { HandlerContext } from '../types/handler.js';
 import type { WPMedia } from '../types/wordpress.js';
-import type {
-  UploadMediaInput,
-  GenerateFeaturedImageInput,
-} from '../schemas/media-schemas.js';
+import type { UploadMediaInput, GenerateFeaturedImageInput } from '../schemas/media-schemas.js';
 import {
   generateImage,
   saveImageToTempFile,
@@ -34,10 +31,7 @@ export class MediaService {
   /**
    * メディアをアップロードする
    */
-  static async uploadMedia(
-    input: UploadMediaInput,
-    ctx: HandlerContext
-  ): Promise<WPMedia> {
+  static async uploadMedia(input: UploadMediaInput, ctx: HandlerContext): Promise<WPMedia> {
     const media = await ctx.wpAPI.uploadMedia(input.file_path, {
       title: input.title,
       altText: input.alt_text,
@@ -76,10 +70,7 @@ export class MediaService {
 
     try {
       // 一時ファイルに保存
-      tempFilePath = await saveImageToTempFile(
-        generated.base64Data,
-        generated.mimeType
-      );
+      tempFilePath = await saveImageToTempFile(generated.base64Data, generated.mimeType);
 
       // WordPress にアップロード
       const media = await ctx.wpAPI.uploadMedia(tempFilePath, {

@@ -119,10 +119,7 @@ export async function handleGetTaxonomies(args: unknown, ctx: HandlerContext) {
 /**
  * get_taxonomy_terms ハンドラー
  */
-export async function handleGetTaxonomyTerms(
-  args: unknown,
-  ctx: HandlerContext
-) {
+export async function handleGetTaxonomyTerms(args: unknown, ctx: HandlerContext) {
   const input = getTaxonomyTermsSchema.parse(args);
 
   const terms = await ctx.wpAPI.getTaxonomyTerms(input.taxonomy, {
@@ -145,10 +142,7 @@ export async function handleGetTaxonomyTerms(
 /**
  * create_taxonomy_term ハンドラー
  */
-export async function handleCreateTaxonomyTerm(
-  args: unknown,
-  ctx: HandlerContext
-) {
+export async function handleCreateTaxonomyTerm(args: unknown, ctx: HandlerContext) {
   const input = createTaxonomyTermSchema.parse(args);
 
   const term = await ctx.wpAPI.createTaxonomyTerm(input.taxonomy, {
