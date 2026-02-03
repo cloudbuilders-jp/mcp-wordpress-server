@@ -9,11 +9,15 @@ Cursor / Claude から WordPress にブログ記事を投稿できる MCP (Model
 - **Gutenberg ブロック出力**: 段落、見出し、リスト、画像、引用、テーブルなどが適切なブロック形式で出力
 - **Highlighting Code Block 対応**: コードブロックは [Highlighting Code Block](https://ja.wordpress.org/plugins/highlighting-code-block/) プラグイン形式で出力
 - **画像自動アップロード**: Markdown 内のローカル画像を検出して自動アップロード
+- **画像自動圧縮**: 1MB以上の画像を自動で圧縮（JPEG/PNG/WebP対応）
 - **アイキャッチ画像**: 投稿作成・更新時にアイキャッチ画像を設定可能
 - **AI アイキャッチ画像生成**: Gemini API を使って記事内容からアイキャッチ画像を自動生成
+- **SEO Excerpt 自動生成**: Gemini API を使って記事の抜粋（meta description）を自動生成
 - **メディア管理**: 画像や動画のアップロード・削除
 - **カテゴリ・タグ**: 一覧取得、新規作成、投稿への設定
 - **カスタムタクソノミー対応**: カスタム投稿タイプのタクソノミー（カテゴリ・タグ）の取得・作成・設定
+
+> 📖 詳細なドキュメントは [docs/](./docs/) を参照してください。
 
 ## セットアップ
 
@@ -70,7 +74,17 @@ npm run build
 | `WORDPRESS_USERNAME`     | ✅   | WordPress ユーザー名              |
 | `WORDPRESS_APP_PASSWORD` | ✅   | アプリケーションパスワード        |
 | `WP_POST_TYPE`           | ❌   | 投稿タイプ（デフォルト: `posts`） |
-| `GEMINI_API_KEY`         | ❌   | Gemini API キー（`generate_featured_image` 使用時に必要） |
+| `GEMINI_API_KEY`         | ❌   | Gemini API キー（AI画像生成・Excerpt自動生成に必要） |
+
+**画像圧縮設定（すべてオプション）:**
+
+| 変数名                      | デフォルト | 説明                              |
+| --------------------------- | ---------- | --------------------------------- |
+| `IMAGE_COMPRESSION_ENABLED` | `true`     | 圧縮の有効/無効（`false`で無効化）|
+| `IMAGE_SIZE_THRESHOLD`      | `1048576`  | 圧縮対象のファイルサイズ（バイト、デフォルト1MB） |
+| `IMAGE_COMPRESSION_QUALITY` | `80`       | 圧縮品質（1-100）                 |
+| `IMAGE_MAX_WIDTH`           | `1920`     | リサイズ後の最大幅（ピクセル）    |
+| `IMAGE_MAX_HEIGHT`          | `1080`     | リサイズ後の最大高さ（ピクセル）  |
 
 > **カスタム投稿タイプの使用**: `WP_POST_TYPE` を設定すると、通常の「投稿」ではなくカスタム投稿タイプに対して操作を行います。例えば `articles` を設定すると、`/wp-json/wp/v2/articles` エンドポイントを使用します。
 
@@ -209,6 +223,23 @@ generate_featured_image でタイトルと本文を指定
 # 投稿作成時に設定
 create_post で featured_media に返却されたメディア ID を指定
 ```
+
+### SEO Excerpt 自動生成
+
+`GEMINI_API_KEY` を設定すると、`create_post` や `create_post_from_file` で `excerpt` を指定しなかった場合に、記事内容から SEO に最適化された抜粋（160文字程度）を自動生成します。
+
+- 手動で `excerpt` を指定した場合はそちらが優先されます
+- 生成に失敗しても投稿作成は継続されます
+
+### 画像自動圧縮
+
+1MB を超える画像は自動的に圧縮されます：
+
+- **対象フォーマット**: JPEG, PNG（透過なし）, WebP
+- **スキップ**: GIF（アニメーション）, SVG（ベクター）, 透過PNG
+- **処理**: 品質調整 → 必要に応じてリサイズ
+
+環境変数で圧縮設定をカスタマイズできます（上記の環境変数セクション参照）。
 
 ## Markdown の対応
 
