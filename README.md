@@ -21,16 +21,7 @@ Cursor / Claude から WordPress にブログ記事を投稿できる MCP (Model
 
 ## セットアップ
 
-### 1. インストール
-
-```bash
-git clone <repository-url>
-cd mcp-wordpress-server
-npm install
-npm run build
-```
-
-### 2. WordPress の設定
+### 1. WordPress の設定
 
 #### アプリケーションパスワードの発行
 
@@ -43,7 +34,7 @@ npm run build
 
 > **注意**: アプリケーションパスワードは WordPress 5.6 以上で利用可能です。HTTPS が必須です。
 
-### 3. Cursor の設定
+### 2. Cursor の設定
 
 `~/.cursor/mcp.json` を作成または編集:
 
@@ -51,8 +42,8 @@ npm run build
 {
   "mcpServers": {
     "wordpress": {
-      "command": "node",
-      "args": ["/path/to/mcp-wordpress-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "github:cloudbuilders-jp/mcp-wordpress-server"],
       "env": {
         "WORDPRESS_URL": "https://your-site.com",
         "WORDPRESS_USERNAME": "your-username",
@@ -64,7 +55,9 @@ npm run build
 }
 ```
 
-**パスは絶対パスで指定してください。**
+### 3. Cursor を再起動
+
+設定を反映するため、Cursor を完全に終了して再起動します。
 
 ### 環境変数
 
@@ -87,10 +80,6 @@ npm run build
 | `IMAGE_MAX_HEIGHT`          | `1080`     | リサイズ後の最大高さ（ピクセル）  |
 
 > **カスタム投稿タイプの使用**: `WP_POST_TYPE` を設定すると、通常の「投稿」ではなくカスタム投稿タイプに対して操作を行います。例えば `articles` を設定すると、`/wp-json/wp/v2/articles` エンドポイントを使用します。
-
-### 4. Cursor を再起動
-
-設定を反映するため、Cursor を完全に終了して再起動します。
 
 ## 使い方
 
