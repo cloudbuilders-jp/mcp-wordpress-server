@@ -218,6 +218,26 @@ export function convertToGutenbergBlocks(markdown: string): string {
   // タイトル（最初の H1）を除去
   const contentWithoutTitle = markdown.replace(/^#\s+.+\n*/m, "");
 
+  // 単独行の URL を blogcard ショートコードに変換
+  const contentWithBlogcards = contentWithoutTitle.replace(
+    /^(https?:\/\/\S+)\s*$/gm,
+    (_match, url) => `[blogcard url="${url}"]`
+  );
+
+  // WordPress ショートコード（例: [blogcard url="..."]）を退避
+  // marked がクォートをエスケープするのを防ぐ
+  const shortcodePlaceholders: Map<string, string> = new Map();
+  let placeholderIndex = 0;
+  const contentWithPlaceholders = contentWithBlogcards.replace(
+    /^\[([a-zA-Z_-]+)\s+[^\]]*\]\s*$/gm,
+    (match) => {
+      const placeholder = `<!--SHORTCODE_PLACEHOLDER_${placeholderIndex}-->`;
+      shortcodePlaceholders.set(placeholder, match.trim());
+      placeholderIndex++;
+      return placeholder;
+    }
+  );
+
   // カスタムレンダラーを使用
   const renderer = new Renderer();
   Object.assign(renderer, gutenbergRenderer);
@@ -228,7 +248,20 @@ export function convertToGutenbergBlocks(markdown: string): string {
     renderer,
   });
 
-  const result = marked.parse(contentWithoutTitle) as string;
+  let result = marked.parse(contentWithPlaceholders) as string;
+
+  // ショートコードを復元
+  for (const [placeholder, shortcode] of shortcodePlaceholders) {
+    result = result.replace(
+      new RegExp(
+        `<!-- wp:paragraph -->\\n<p>${placeholder}</p>\\n<!-- /wp:paragraph -->`,
+        "g"
+      ),
+      shortcode
+    );
+    // フォールバック: パラグラフラップなしの場合
+    result = result.replace(placeholder, shortcode);
+  }
 
   // 末尾の余分な空行を整理
   return result.trim() + "\n";
