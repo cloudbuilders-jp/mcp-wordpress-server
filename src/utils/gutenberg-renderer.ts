@@ -211,6 +211,53 @@ const gutenbergRenderer: Partial<Renderer> = {
 };
 
 /**
+ * フェンスコードブロック外の単独 URL を blogcard ショートコードに変換
+ */
+function replaceStandaloneUrlsOutsideFencedCodeBlocks(content: string): string {
+  const lines = content.split("\n");
+  let inFencedCodeBlock = false;
+  let currentFenceChar = "";
+  let currentFenceLength = 0;
+
+  const convertedLines = lines.map((line) => {
+    const fenceMatch = line.match(/^\s{0,3}(```+|~~~+)[^\n]*$/);
+    if (fenceMatch) {
+      const fence = fenceMatch[1];
+      const fenceChar = fence[0];
+      const fenceLength = fence.length;
+
+      if (!inFencedCodeBlock) {
+        inFencedCodeBlock = true;
+        currentFenceChar = fenceChar;
+        currentFenceLength = fenceLength;
+      } else if (
+        fenceChar === currentFenceChar &&
+        fenceLength >= currentFenceLength
+      ) {
+        inFencedCodeBlock = false;
+        currentFenceChar = "";
+        currentFenceLength = 0;
+      }
+
+      return line;
+    }
+
+    if (inFencedCodeBlock) {
+      return line;
+    }
+
+    const urlMatch = line.match(/^(https?:\/\/\S+)\s*$/);
+    if (urlMatch) {
+      return `[blogcard url="${urlMatch[1]}"]`;
+    }
+
+    return line;
+  });
+
+  return convertedLines.join("\n");
+}
+
+/**
  * Markdown を WordPress Gutenberg ブロック形式に変換
  * タイトル（最初のH1）は除去される
  */
@@ -219,10 +266,8 @@ export function convertToGutenbergBlocks(markdown: string): string {
   const contentWithoutTitle = markdown.replace(/^#\s+.+\n*/m, "");
 
   // 単独行の URL を blogcard ショートコードに変換
-  const contentWithBlogcards = contentWithoutTitle.replace(
-    /^(https?:\/\/\S+)\s*$/gm,
-    (_match, url) => `[blogcard url="${url}"]`
-  );
+  const contentWithBlogcards =
+    replaceStandaloneUrlsOutsideFencedCodeBlocks(contentWithoutTitle);
 
   // WordPress ショートコード（例: [blogcard url="..."]）を退避
   // marked がクォートをエスケープするのを防ぐ
@@ -231,7 +276,7 @@ export function convertToGutenbergBlocks(markdown: string): string {
   const contentWithPlaceholders = contentWithBlogcards.replace(
     /^\[([a-zA-Z_-]+)\s+[^\]]*\]\s*$/gm,
     (match) => {
-      const placeholder = `<!--SHORTCODE_PLACEHOLDER_${placeholderIndex}-->`;
+      const placeholder = `WPMCP_SHORTCODE_PLACEHOLDER_${placeholderIndex}`;
       shortcodePlaceholders.set(placeholder, match.trim());
       placeholderIndex++;
       return placeholder;
