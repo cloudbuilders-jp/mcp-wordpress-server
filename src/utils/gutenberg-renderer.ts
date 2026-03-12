@@ -218,25 +218,44 @@ export function convertToGutenbergBlocks(markdown: string): string {
   // タイトル（最初の H1）を除去
   const contentWithoutTitle = markdown.replace(/^#\s+.+\n*/m, "");
 
+  // コードブロックを退避（内部のURLが誤変換されるのを防ぐ）
+  const codeBlockPlaceholders: Map<string, string> = new Map();
+  let codeBlockIndex = 0;
+  const contentWithoutCodeBlocks = contentWithoutTitle.replace(
+    /^(`{3,}|~{3,}).*\n[\s\S]*?\n\1\s*$/gm,
+    (match) => {
+      const placeholder = `__CODE_BLOCK_${codeBlockIndex}__`;
+      codeBlockPlaceholders.set(placeholder, match);
+      codeBlockIndex++;
+      return placeholder;
+    }
+  );
+
   // 単独行の URL を blogcard ショートコードに変換
-  const contentWithBlogcards = contentWithoutTitle.replace(
-    /^(https?:\/\/\S+)\s*$/gm,
+  const contentWithBlogcards = contentWithoutCodeBlocks.replace(
+    /^(https?:\/\/\S+)[ \t]*$/gm,
     (_match, url) => `[blogcard url="${url}"]`
   );
 
   // WordPress ショートコード（例: [blogcard url="..."]）を退避
   // marked がクォートをエスケープするのを防ぐ
   const shortcodePlaceholders: Map<string, string> = new Map();
-  let placeholderIndex = 0;
-  const contentWithPlaceholders = contentWithBlogcards.replace(
-    /^\[([a-zA-Z_-]+)\s+[^\]]*\]\s*$/gm,
+  let shortcodeIndex = 0;
+  const contentWithShortcodePlaceholders = contentWithBlogcards.replace(
+    /^\[([a-zA-Z_-]+)\s+[^\]]*\][ \t]*$/gm,
     (match) => {
-      const placeholder = `<!--SHORTCODE_PLACEHOLDER_${placeholderIndex}-->`;
+      const placeholder = `SHORTCODE_PLACEHOLDER_${shortcodeIndex}`;
       shortcodePlaceholders.set(placeholder, match.trim());
-      placeholderIndex++;
+      shortcodeIndex++;
       return placeholder;
     }
   );
+
+  // コードブロックを復元（marked に正しく処理させる）
+  let contentForMarked = contentWithShortcodePlaceholders;
+  for (const [placeholder, codeBlock] of codeBlockPlaceholders) {
+    contentForMarked = contentForMarked.replace(placeholder, codeBlock);
+  }
 
   // カスタムレンダラーを使用
   const renderer = new Renderer();
@@ -248,9 +267,9 @@ export function convertToGutenbergBlocks(markdown: string): string {
     renderer,
   });
 
-  let result = marked.parse(contentWithPlaceholders) as string;
+  let result = marked.parse(contentForMarked) as string;
 
-  // ショートコードを復元
+  // ショートコードを復元（marked が段落でラップしたものを置換）
   for (const [placeholder, shortcode] of shortcodePlaceholders) {
     result = result.replace(
       new RegExp(
@@ -259,7 +278,7 @@ export function convertToGutenbergBlocks(markdown: string): string {
       ),
       shortcode
     );
-    // フォールバック: パラグラフラップなしの場合
+    // フォールバック
     result = result.replace(placeholder, shortcode);
   }
 
